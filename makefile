@@ -1,7 +1,7 @@
 .PHONY: header all clean file_tree run
 
 CC_FLAGS = -Wall -g
-LD_FLAGS = -Wall -g
+LD_FLAGS = -Wall -g -lm
 
 CC = gcc
 OBJ = $(shell find src -name '*.c' | sed -e 's/\.c/\.o/' -e 's/src/obj/')
@@ -46,6 +46,11 @@ endif
 
 run:
 	@./bin/main
+
+view_ppm:
+	@mkdir -p out
+	@./bin/main > out/result.ppm
+	@gthumb out/result.ppm
 
 all: clean file_tree main
 
