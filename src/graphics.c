@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-void init_graphics(void) {
+void init_graphics(const int image_width, const int image_height) {
 #ifdef MAKE_SDL
     // Init SDL
 #endif
@@ -14,7 +14,7 @@ void init_graphics(void) {
 }
 
 #ifndef MAKE_PPM
-void set_pixel(int x, int y, vec3 rgb) {
+void set_pixel(int x, int y, Vec3 rgb) {
 #ifdef MAKE_SDL
     // SDL Stuff
     printf("Hello SDL\n");
@@ -25,7 +25,7 @@ void set_pixel(int x, int y, vec3 rgb) {
 #endif
 }
 #else
-void set_pixel(vec3 rgb) {
+void set_pixel(Vec3 rgb) {
     int r = (int)(255.999 * rgb.x);
     int g = (int)(255.999 * rgb.y);
     int b = (int)(255.999 * rgb.z);

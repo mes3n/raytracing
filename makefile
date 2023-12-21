@@ -33,7 +33,8 @@ ifeq ("$(wildcard $(FILE))", "")
 	@echo '' >> $(FILE)
 	@echo '' >> $(FILE)
 	@echo '' >> $(FILE)
-	@echo '#endif  // $(HEADER_NAME)' >> $(FILE)
+	@echo '#endif // $(HEADER_NAME)' >> $(FILE)
+	@echo '#include "$(shell basename $(FILE))"' >> $(SRC_FILE)
 
 	@echo "Created c header file ($(FILE)) with header guard ($(HEADER_NAME)) and source file ($(SRC_FILE))."
 	git add $(FILE) $(SRC_FILE)
@@ -47,7 +48,7 @@ endif
 run:
 	@./bin/main
 
-view_ppm:
+view_ppm: ppm
 	@mkdir -p out
 	@./bin/main > out/result.ppm
 	@gthumb out/result.ppm
