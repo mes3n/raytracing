@@ -7,7 +7,8 @@
 
 void set_face_normal(HitRecord *hit_record, const Ray *ray, const Vec3 out_n) {
     hit_record->front_face = vec3_dot(ray->direction, out_n) < 0;
-    hit_record->normal = hit_record->front_face ? out_n : vec3_scale(out_n, -1.0);
+    hit_record->normal =
+        hit_record->front_face ? out_n : vec3_scale(out_n, -1.0);
 }
 
 int sphere_hit(const Sphere *sphere, const Ray *ray, const double rayt_min,
@@ -34,7 +35,8 @@ int sphere_hit(const Sphere *sphere, const Ray *ray, const double rayt_min,
     hit_record->normal = vec3_scale(vec3_sub(hit_record->point, sphere->center),
                                     1.0 / sphere->radius);
 
-    Vec3 out_n = vec3_scale(vec3_sub(hit_record->point, sphere->center), 1.0/sphere->radius);
+    Vec3 out_n = vec3_scale(vec3_sub(hit_record->point, sphere->center),
+                            1.0 / sphere->radius);
     set_face_normal(hit_record, ray, out_n);
 
     return 1;
