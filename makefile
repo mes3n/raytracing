@@ -12,13 +12,15 @@ obj/%.o: src/%.c
 main: file_tree $(OBJ)
 	$(CC) $(OBJ) -o bin/main $(LD_FLAGS)
 
-tice: CC_FLAGS += -DMAKE_TICE -DNO_MAKE_SDL
-tice: file_tree $(OBJ)
-	$(CC) $(OBJ) -o bin/main $(LD_FLAGS)
+sdl: CC_FLAGS += -DMAKE_SDL
+	LD_FLAGS += -lSDL2
+sdl: main
 
-ppm: CC_FLAGS += -DMAKE_PPM -DNO_MAKE_SDL
-ppm: file_tree $(OBJ)
-	$(CC) $(OBJ) -o bin/main $(LD_FLAGS)
+tice: CC_FLAGS += -DMAKE_TICE
+tice: main
+
+ppm: CC_FLAGS += -DMAKE_PPM
+ppm: main
 
 header: HEADER_NAME = $(shell basename $(FILE) | tr a-z A-Z | sed 's/\./_/')
 	SRC_FILE = $(shell echo $(FILE) | sed 's/\.h/\.c/')
