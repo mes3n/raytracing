@@ -2,22 +2,21 @@
 
 #include <stdlib.h>
 
-int hit_any(const Hittables *ht, const Ray *ray, const double ray_tmin,
-            const double ray_tmax, HitRecord *hit_record) {
+int hit_any(const Hittables *ht, const Ray *ray, const Interval *rayt,
+            HitRecord *hit_record) {
 
     HitRecord tmp_hr;
-    double nearest = ray_tmax;
+    double nearest = rayt->max;
     int any_hit = 0;
 
     const Hittables *next = ht;
 
     while (next != NULL) {
-        if (next->shape_hit(next->shape, ray, ray_tmin, ray_tmax, &tmp_hr)) {
-            if (tmp_hr.t < nearest) {
-                *hit_record = tmp_hr;
-                nearest = hit_record->t;
-                any_hit = 1;
-            }
+        if (next->shape_hit(next->shape, ray, &(Interval){rayt->min, nearest},
+                            &tmp_hr)) {
+            *hit_record = tmp_hr;
+            nearest = hit_record->t;
+            any_hit = 1;
         }
         next = next->next;
     }

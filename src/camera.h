@@ -1,6 +1,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include "hittables.h"
 #include "vec3.h"
 
 typedef struct {
@@ -11,11 +12,16 @@ typedef struct {
 } Viewport;
 
 typedef struct {
+    int image_width, image_height;
     double focal_length;
     Viewport viewport;
     Vec3 origin;
 } Camera;
 
-void init_camera(Camera *camera, const int image_width, const int image_height);
+int init_camera(Camera *camera);
+
+void render(const Camera *camera, const Hittables *world);
+
+Vec3 ray_color(const Ray *ray, const Hittables *world);
 
 #endif // CAMERA_H

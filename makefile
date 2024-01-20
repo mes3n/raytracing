@@ -1,7 +1,7 @@
 .PHONY: header all clean file_tree run
 
-CC_FLAGS = -Wall -g
-LD_FLAGS = -Wall -g -lm
+CC_FLAGS = -Wall -pedantic -g
+LD_FLAGS = -Wall -pedantic -g -lm
 
 CC = gcc
 OBJ = $(shell find src -name '*.c' | sed -e 's/\.c/\.o/' -e 's/src/obj/')
@@ -39,7 +39,7 @@ ifeq ("$(wildcard $(FILE))", "")
 	@echo '#include "$(shell basename $(FILE))"' >> $(SRC_FILE)
 
 	@echo "Created c header file ($(FILE)) with header guard ($(HEADER_NAME)) and source file ($(SRC_FILE))."
-	git add $(FILE) $(SRC_FILE)
+	# git add $(FILE) $(SRC_FILE)
 else
 	@echo "Header file already exists."
 endif

@@ -1,5 +1,6 @@
 #include "sphere.h"
 
+#include "interval.h"
 #include "ray.h"
 #include "vec3.h"
 
@@ -11,8 +12,7 @@ void set_face_normal(HitRecord *hit_record, const Ray *ray, const Vec3 out_n) {
         hit_record->front_face ? out_n : vec3_scale(out_n, -1.0);
 }
 
-int sphere_hit(const Sphere *sphere, const Ray *ray, const double rayt_min,
-               const double rayt_max, HitRecord *hit_record) {
+int sphere_hit(const Sphere *sphere, const Ray *ray, const Interval* rayt, HitRecord *hit_record) {
     Vec3 oc = vec3_sub(ray->origin, sphere->center);
     double a = vec3_length_squared(ray->direction);
     double b_2 = vec3_dot(oc, ray->direction);
@@ -24,9 +24,9 @@ int sphere_hit(const Sphere *sphere, const Ray *ray, const double rayt_min,
     double sqd = sqrt(d);
 
     double r = (-b_2 - sqd) / a;
-    if (r <= rayt_min || rayt_max <= r) {
+    if (!interval_surrounds(rayt, r)) {
         r = (-b_2 + sqd) / a;
-        if (r <= rayt_min || rayt_max <= r)
+        if (!interval_surrounds(rayt, r))
             return 0;
     }
 
