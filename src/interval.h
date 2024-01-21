@@ -6,7 +6,8 @@ typedef struct {
     double max;
 } Interval;
 
-int interval_contains(const Interval* interval, double x);
-int interval_surrounds(const Interval* interval, double x);
+int contains(const Interval* interval, double x);
+int surrounds(const Interval* interval, double x);
+double clamp(const Interval* interval, double x);
 
 #endif // INTERVAL_H

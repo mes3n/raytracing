@@ -13,15 +13,13 @@ typedef struct {
 
 typedef struct {
     int image_width, image_height;
+    int samples_per_pixel;
     double focal_length;
     Viewport viewport;
     Vec3 origin;
 } Camera;
 
 int init_camera(Camera *camera);
-
 void render(const Camera *camera, const Hittables *world);
-
-Vec3 ray_color(const Ray *ray, const Hittables *world);
 
 #endif // CAMERA_H

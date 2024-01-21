@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 int init_camera(Camera *camera) {
-    const int image_width = 800u;
+    const int image_width = 400u;
     const double aspect_ratio = 16.0 / 9.0;
 
     const int image_height = (int)((double)image_width / aspect_ratio);
@@ -19,6 +19,7 @@ int init_camera(Camera *camera) {
 
     camera->image_width = image_width;
     camera->image_height = image_height;
+    camera->samples_per_pixel = 100;
 
     camera->focal_length = 1.0;
     camera->viewport.height = 2.0;
@@ -52,28 +53,6 @@ int init_camera(Camera *camera) {
     return 0;
 }
 
-void render(const Camera *camera, const Hittables *world) {
-    for (int y = 0; y < camera->image_height; y++) {
-        fprintf(stderr, "\rScanlines remaining: %d ", camera->image_height - y);
-        fflush(stderr);
-        for (int x = 0; x < camera->image_width; x++) {
-            Vec3 vp_pixel =
-                vec3_add(camera->viewport.pos_at00,
-                         vec3_add(vec3_scale(camera->viewport.dx, (double)x),
-                                  vec3_scale(camera->viewport.dy, (double)y)));
-            Vec3 ray_direction = vec3_sub(vp_pixel, camera->origin);
-            Ray ray =
-                (Ray){.origin = camera->origin, .direction = ray_direction};
-            Vec3 rgb = ray_color(&ray, world);
-
-            set_pixel(x, y, rgb);
-        }
-    }
-    fprintf(stderr, "\rDone.                 \n");
-
-    stop_graphics();
-}
-
 Vec3 ray_color(const Ray *ray, const Hittables *world) {
     HitRecord hr;
     if (hit_any(world, ray, &(Interval){0.0, INFINITY}, &hr)) {
@@ -85,4 +64,45 @@ Vec3 ray_color(const Ray *ray, const Hittables *world) {
     double s = 0.5 * (unit.y + 1.0);
     return vec3_add(vec3_scale(vec3_from(1.0, 1.0, 1.0), 1.0 - s),
                     vec3_scale(vec3_from(0.5, 0.7, 1.0), s));
+}
+
+#include <stdlib.h>
+
+static inline double random_double() { return (double)rand() / (RAND_MAX + 1.0); }
+
+Vec3 pixel_sample(const Camera *camera) {
+    double px = random_double();
+    double py = random_double();
+
+    return vec3_add(vec3_scale(camera->viewport.dx, px),
+                    vec3_scale(camera->viewport.dy, py));
+}
+
+Ray get_ray(const Camera *camera, const int x, const int y) {
+    Vec3 vp_pixel =
+        vec3_add(camera->viewport.pos_at00,
+                 vec3_add(vec3_scale(camera->viewport.dx, (double)x),
+                          vec3_scale(camera->viewport.dy, (double)y)));
+    vp_pixel = vec3_add(vp_pixel, pixel_sample(camera));
+    Vec3 ray_direction = vec3_sub(vp_pixel, camera->origin);
+    return (Ray){.origin = camera->origin, .direction = ray_direction};
+}
+
+void render(const Camera *camera, const Hittables *world) {
+    for (int y = 0; y < camera->image_height; y++) {
+        fprintf(stderr, "\rScanlines remaining: %d ", camera->image_height - y);
+        fflush(stderr);
+        for (int x = 0; x < camera->image_width; x++) {
+            Vec3 rgb = vec3_zero();
+            for (int sample = 0; sample < camera->samples_per_pixel; sample++) {
+                Ray ray = get_ray(camera, x, y);
+                rgb = vec3_add(rgb, ray_color(&ray, world));
+            }
+            rgb = vec3_scale(rgb, 1.0 / camera->samples_per_pixel);
+            set_pixel(x, y, rgb);
+        }
+    }
+    fprintf(stderr, "\rDone.                 \n");
+
+    stop_graphics();
 }

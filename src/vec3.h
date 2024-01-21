@@ -7,6 +7,10 @@ typedef struct {
     double x, y, z;
 } Vec3;
 
+static inline Vec3 vec3_zero() {
+    return (Vec3){.x = 0.0, .y = 0.0, .z = 0.0};
+}
+
 static inline Vec3 vec3_from(const double x, const double y, const double z) {
     return (Vec3){.x = x, .y = y, .z = z};
 }

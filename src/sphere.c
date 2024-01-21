@@ -24,9 +24,9 @@ int sphere_hit(const Sphere *sphere, const Ray *ray, const Interval* rayt, HitRe
     double sqd = sqrt(d);
 
     double r = (-b_2 - sqd) / a;
-    if (!interval_surrounds(rayt, r)) {
+    if (!surrounds(rayt, r)) {
         r = (-b_2 + sqd) / a;
-        if (!interval_surrounds(rayt, r))
+        if (!surrounds(rayt, r))
             return 0;
     }
 
