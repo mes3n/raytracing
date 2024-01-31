@@ -14,6 +14,7 @@ typedef struct {
 typedef struct {
     int image_width, image_height;
     int samples_per_pixel;
+    int max_depth;
     double focal_length;
     Viewport viewport;
     Vec3 origin;

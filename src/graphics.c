@@ -15,7 +15,8 @@ const int sdl_scale = 4;
 
 int init_graphics(const int image_width, const int image_height) {
 #ifdef MAKE_SDL
-    SDL_CreateWindowAndRenderer(image_width * sdl_scale, image_height * sdl_scale, 0, &sdl_window,
+    SDL_CreateWindowAndRenderer(image_width * sdl_scale,
+                                image_height * sdl_scale, 0, &sdl_window,
                                 &sdl_renderer);
     if (sdl_window == NULL || sdl_renderer == NULL) {
         fprintf(stderr, "SDL Error: %s\n", SDL_GetError());
@@ -33,7 +34,12 @@ int init_graphics(const int image_width, const int image_height) {
     return 0;
 }
 
+static inline Vec3 linear_to_gamma(Vec3 v) {
+    return vec3_from(sqrt(v.x), sqrt(v.y), sqrt(v.z));
+}
+
 void set_pixel(int x, int y, Vec3 rgb) {
+    rgb = linear_to_gamma(rgb);
     int r = (int)(255.999 * rgb.x);
     int g = (int)(255.999 * rgb.y);
     int b = (int)(255.999 * rgb.z);

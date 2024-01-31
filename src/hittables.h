@@ -4,11 +4,12 @@
 #include "hit_record.h"
 #include "interval.h"
 #include "ray.h"
+#include "scatter.h"
 
-#define NULL (void *)0
+#include <stdbool.h>
 
-typedef int (*ShapeHitFn)(const void *, const Ray *, const Interval *,
-                          HitRecord *);
+typedef bool (*ShapeHitFn)(const void *, const Ray *, const Interval *,
+                           HitRecord *, Scatterer *);
 
 typedef struct Hittables {
     const void *shape;
@@ -17,8 +18,8 @@ typedef struct Hittables {
     struct Hittables *next;
 } Hittables;
 
-int hit_any(const Hittables *hittables, const Ray *ray, const Interval *rayt,
-            HitRecord *hit_record);
+bool hit_any(const Hittables *hittables, const Ray *ray, const Interval *rayt,
+             HitRecord *hit_record, Scatterer *scatterer);
 
 int hittables_add(Hittables **hittables, const void *shape,
                   ShapeHitFn shape_hit);

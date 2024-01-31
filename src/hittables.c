@@ -1,22 +1,24 @@
 #include "hittables.h"
+#include "scatter.h"
 
 #include <stdlib.h>
 
-int hit_any(const Hittables *ht, const Ray *ray, const Interval *rayt,
-            HitRecord *hit_record) {
+bool hit_any(const Hittables *ht, const Ray *ray, const Interval *rayt,
+             HitRecord *hit_record, Scatterer *scatterer) {
 
     HitRecord tmp_hr;
     double nearest = rayt->max;
-    int any_hit = 0;
+    bool any_hit = false;
 
     const Hittables *next = ht;
 
     while (next != NULL) {
         if (next->shape_hit(next->shape, ray, &(Interval){rayt->min, nearest},
-                            &tmp_hr)) {
+                            &tmp_hr, scatterer)) {
             *hit_record = tmp_hr;
             nearest = hit_record->t;
-            any_hit = 1;
+
+            any_hit = true;
         }
         next = next->next;
     }

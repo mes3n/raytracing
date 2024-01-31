@@ -1,8 +1,8 @@
 #include "camera.h"
-#include "ray.h"
-#include "vec3.h"
-
 #include "graphics.h"
+#include "ray.h"
+#include "scatter.h"
+#include "vec3.h"
 
 #include <stdio.h>
 
@@ -14,12 +14,13 @@ int init_camera(Camera *camera) {
 
     if (image_height < 1) {
         fprintf(stderr, "Image width cannot be less than 1.\n");
-        return -1;
+        return false;
     }
 
     camera->image_width = image_width;
     camera->image_height = image_height;
-    camera->samples_per_pixel = 100;
+    camera->samples_per_pixel = 4; // 100
+    camera->max_depth = 10;
 
     camera->focal_length = 1.0;
     camera->viewport.height = 2.0;
@@ -47,18 +48,25 @@ int init_camera(Camera *camera) {
 
     if (init_graphics(image_width, image_height) < 0) {
         fprintf(stderr, "Failed to initialize graphics.\n");
-        return -1;
+        return false;
     }
 
-    return 0;
+    return true;
 }
 
-Vec3 ray_color(const Ray *ray, const Hittables *world) {
+Vec3 ray_color(const Ray *ray, const int depth, const Hittables *world) {
+    if (depth <= 0) {
+        return vec3_zero();
+    }
     HitRecord hr;
-    if (hit_any(world, ray, &(Interval){0.0, INFINITY}, &hr)) {
-        return vec3_scale(
-            vec3_from(1.0 + hr.normal.x, 1.0 + hr.normal.y, 1.0 + hr.normal.z),
-            0.5);
+    Scatterer scatterer;
+    if (hit_any(world, ray, &(Interval){0.001, INFINITY}, &hr, &scatterer)) {
+        Ray scattered;
+        if (scatterer.scatter(ray, &hr, &scattered)) {
+            return vec3_scale_from_vec3(ray_color(&scattered, depth - 1, world),
+                                        scatterer.attenuation);
+        }
+        return vec3_zero();
     }
     Vec3 unit = vec3_normal(ray->direction);
     double s = 0.5 * (unit.y + 1.0);
@@ -66,24 +74,29 @@ Vec3 ray_color(const Ray *ray, const Hittables *world) {
                     vec3_scale(vec3_from(0.5, 0.7, 1.0), s));
 }
 
-#include <stdlib.h>
+// #include <stdlib.h>
+//
+// static inline double random_double() {
+//     return (double)rand() / (RAND_MAX + 1.0);
+// }
 
-static inline double random_double() { return (double)rand() / (RAND_MAX + 1.0); }
+Vec3 pixel_sample(const Camera *camera, const double px, const double py) {
+    // double px = random_double();
+    // double py = random_double();
 
-Vec3 pixel_sample(const Camera *camera) {
-    double px = random_double();
-    double py = random_double();
-
-    return vec3_add(vec3_scale(camera->viewport.dx, px),
-                    vec3_scale(camera->viewport.dy, py));
+    return vec3_add(
+        vec3_scale(camera->viewport.dx, px / (double)camera->samples_per_pixel),
+        vec3_scale(camera->viewport.dy,
+                   py / (double)camera->samples_per_pixel));
 }
 
-Ray get_ray(const Camera *camera, const int x, const int y) {
+Ray get_ray(const Camera *camera, const int x, const int y, const double px,
+            const double py) {
     Vec3 vp_pixel =
         vec3_add(camera->viewport.pos_at00,
                  vec3_add(vec3_scale(camera->viewport.dx, (double)x),
                           vec3_scale(camera->viewport.dy, (double)y)));
-    vp_pixel = vec3_add(vp_pixel, pixel_sample(camera));
+    vp_pixel = vec3_add(vp_pixel, pixel_sample(camera, px, py));
     Vec3 ray_direction = vec3_sub(vp_pixel, camera->origin);
     return (Ray){.origin = camera->origin, .direction = ray_direction};
 }
@@ -94,11 +107,15 @@ void render(const Camera *camera, const Hittables *world) {
         fflush(stderr);
         for (int x = 0; x < camera->image_width; x++) {
             Vec3 rgb = vec3_zero();
-            for (int sample = 0; sample < camera->samples_per_pixel; sample++) {
-                Ray ray = get_ray(camera, x, y);
-                rgb = vec3_add(rgb, ray_color(&ray, world));
+            for (int i = 0; i < camera->samples_per_pixel; i++) {
+                for (int j = 0; j < camera->samples_per_pixel; j++) {
+                    Ray ray = get_ray(camera, x, y, (double)i, (double)j);
+                    rgb = vec3_add(rgb,
+                                   ray_color(&ray, camera->max_depth, world));
+                }
             }
-            rgb = vec3_scale(rgb, 1.0 / camera->samples_per_pixel);
+            rgb = vec3_scale(rgb, 1.0 / (camera->samples_per_pixel *
+                                         camera->samples_per_pixel));
             set_pixel(x, y, rgb);
         }
     }

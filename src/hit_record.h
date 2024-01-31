@@ -3,6 +3,7 @@
 
 #include "vec3.h"
 
+
 typedef struct {
     Vec3 point;
     Vec3 normal;
