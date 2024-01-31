@@ -6,6 +6,7 @@
 
 #ifdef MAKE_SDL
 #include <SDL2/SDL.h>
+#include <stdio.h>
 
 SDL_Window *sdl_window;
 SDL_Renderer *sdl_renderer;

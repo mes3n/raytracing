@@ -1,7 +1,7 @@
 #include "camera.h"
 #include "graphics.h"
+#include "material.h"
 #include "ray.h"
-#include "scatter.h"
 #include "vec3.h"
 
 #include <stdio.h>
@@ -19,7 +19,7 @@ int init_camera(Camera *camera) {
 
     camera->image_width = image_width;
     camera->image_height = image_height;
-    camera->samples_per_pixel = 4; // 100
+    camera->samples_per_pixel = 10; // 100
     camera->max_depth = 10;
 
     camera->focal_length = 1.0;
@@ -59,12 +59,13 @@ Vec3 ray_color(const Ray *ray, const int depth, const Hittables *world) {
         return vec3_zero();
     }
     HitRecord hr;
-    Scatterer scatterer;
-    if (hit_any(world, ray, &(Interval){0.001, INFINITY}, &hr, &scatterer)) {
+    Material *material;
+    if (hit_any(world, ray, &(Interval){1e-3, INFINITY}, &hr, &material)) {
         Ray scattered;
-        if (scatterer.scatter(ray, &hr, &scattered)) {
+        Vec3 attenuation;
+        if (material->scatter(material, ray, &hr, &scattered, &attenuation)) {
             return vec3_scale_from_vec3(ray_color(&scattered, depth - 1, world),
-                                        scatterer.attenuation);
+                                        attenuation);
         }
         return vec3_zero();
     }
@@ -81,8 +82,8 @@ Vec3 ray_color(const Ray *ray, const int depth, const Hittables *world) {
 // }
 
 Vec3 pixel_sample(const Camera *camera, const double px, const double py) {
-    // double px = random_double();
-    // double py = random_double();
+    // px = random_double();
+    // py = random_double();
 
     return vec3_add(
         vec3_scale(camera->viewport.dx, px / (double)camera->samples_per_pixel),

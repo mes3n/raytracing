@@ -1,10 +1,9 @@
 #include "hittables.h"
-#include "scatter.h"
 
 #include <stdlib.h>
 
 bool hit_any(const Hittables *ht, const Ray *ray, const Interval *rayt,
-             HitRecord *hit_record, Scatterer *scatterer) {
+             HitRecord *hit_record, Material **material) {
 
     HitRecord tmp_hr;
     double nearest = rayt->max;
@@ -14,7 +13,7 @@ bool hit_any(const Hittables *ht, const Ray *ray, const Interval *rayt,
 
     while (next != NULL) {
         if (next->shape_hit(next->shape, ray, &(Interval){rayt->min, nearest},
-                            &tmp_hr, scatterer)) {
+                            &tmp_hr, material)) {
             *hit_record = tmp_hr;
             nearest = hit_record->t;
 

@@ -1,6 +1,6 @@
 .PHONY: header all clean file_tree run
 
-CC_FLAGS = -Wall -pedantic -g
+CC_FLAGS = -Wall -Wextra -pedantic -g
 LD_FLAGS = -Wall -pedantic -g -lm
 
 CC = gcc
