@@ -4,10 +4,11 @@
 #include "ray.h"
 #include "vec3.h"
 
+#include <math.h>
 #include <stdio.h>
 
 int init_camera(Camera *camera) {
-    const int image_width = 400u;
+    const int image_width = 1200u;
     const double aspect_ratio = 16.0 / 9.0;
 
     const int image_height = (int)((double)image_width / aspect_ratio);
@@ -19,32 +20,42 @@ int init_camera(Camera *camera) {
 
     camera->image_width = image_width;
     camera->image_height = image_height;
-    camera->samples_per_pixel = 10; // 100
-    camera->max_depth = 10;
 
-    camera->focal_length = 1.0;
-    camera->viewport.height = 2.0;
-    camera->viewport.width =
-        camera->viewport.height * ((double)image_width / (double)image_height);
+    camera->samples_per_pixel = 22;
+    camera->max_depth = 50;
 
-    camera->viewport.x = vec3_from(camera->viewport.width, 0.0, 0.0);
-    camera->viewport.y = vec3_from(0.0, -camera->viewport.height, 0.0);
+    camera->origin = vec3_from(13.0, 2.0, 3.0);
+    Vec3 look_at = vec3_from(0.0, 0.0, 0.0);
+    Vec3 vup = vec3_from(0.0, 1.0, 0.0);
 
-    camera->viewport.dx =
-        vec3_scale(camera->viewport.x, 1.0 / (double)image_width);
-    camera->viewport.dy =
-        vec3_scale(camera->viewport.y, 1.0 / (double)image_height);
+    double vfov = M_PI / 9.0;
+    double focus_dist = 10.0;
+    camera->defocus_angle = 0.6 * (M_PI / 180.0);
+    double viewport_height = 2.0 * tan(vfov * 0.5) * focus_dist;
+    double viewport_width =
+        viewport_height * ((double)image_width / (double)image_height);
 
-    camera->origin = vec3_from(0.0, 0.0, 0.0);
+    Vec3 w = vec3_normal(vec3_sub(camera->origin, look_at));
+    Vec3 u = vec3_normal(vec3_cross(vup, w));
+    Vec3 v = vec3_cross(w, u);
 
-    camera->viewport.top_left =
-        vec3_sub(vec3_sub(vec3_sub(camera->origin,
-                                   vec3_from(0.0, 0.0, camera->focal_length)),
-                          vec3_scale(camera->viewport.x, 0.5)),
-                 vec3_scale(camera->viewport.y, 0.5));
+    Vec3 viewport_u = vec3_scale(u, viewport_width);
+    Vec3 viewport_v = vec3_scale(v, -viewport_height);
+
+    camera->viewport.dx = vec3_scale(viewport_u, 1.0 / (double)image_width);
+    camera->viewport.dy = vec3_scale(viewport_v, 1.0 / (double)image_height);
+
+    Vec3 viewport_top_left =
+        vec3_sub(vec3_sub(vec3_sub(camera->origin, vec3_scale(w, focus_dist)),
+                          vec3_scale(viewport_u, 0.5)),
+                 vec3_scale(viewport_v, 0.5));
     camera->viewport.pos_at00 = vec3_add(
-        camera->viewport.top_left,
+        viewport_top_left,
         vec3_scale(vec3_add(camera->viewport.dx, camera->viewport.dy), 0.5));
+
+    double defocus_radius = focus_dist * tan(camera->defocus_angle * 0.5);
+    camera->defocus_disc_u = vec3_scale(u, defocus_radius);
+    camera->defocus_disc_v = vec3_scale(v, defocus_radius);
 
     if (init_graphics(image_width, image_height) < 0) {
         fprintf(stderr, "Failed to initialize graphics.\n");
@@ -75,20 +86,18 @@ Vec3 ray_color(const Ray *ray, const int depth, const Hittables *world) {
                     vec3_scale(vec3_from(0.5, 0.7, 1.0), s));
 }
 
-// #include <stdlib.h>
-//
-// static inline double random_double() {
-//     return (double)rand() / (RAND_MAX + 1.0);
-// }
-
 Vec3 pixel_sample(const Camera *camera, const double px, const double py) {
-    // px = random_double();
-    // py = random_double();
-
     return vec3_add(
         vec3_scale(camera->viewport.dx, px / (double)camera->samples_per_pixel),
         vec3_scale(camera->viewport.dy,
                    py / (double)camera->samples_per_pixel));
+}
+
+static inline Vec3 defocus_disk_sample(const Camera *camera) {
+    Vec3 p = vec3_random_in_unit_disk();
+    return vec3_add(vec3_add(vec3_scale(camera->defocus_disc_u, p.x),
+                             vec3_scale(camera->defocus_disc_v, p.y)),
+                    camera->origin);
 }
 
 Ray get_ray(const Camera *camera, const int x, const int y, const double px,
@@ -98,8 +107,13 @@ Ray get_ray(const Camera *camera, const int x, const int y, const double px,
                  vec3_add(vec3_scale(camera->viewport.dx, (double)x),
                           vec3_scale(camera->viewport.dy, (double)y)));
     vp_pixel = vec3_add(vp_pixel, pixel_sample(camera, px, py));
-    Vec3 ray_direction = vec3_sub(vp_pixel, camera->origin);
-    return (Ray){.origin = camera->origin, .direction = ray_direction};
+
+    Vec3 ray_origin = camera->defocus_angle <= 0.0
+                          ? camera->origin
+                          : defocus_disk_sample(camera);
+
+    Vec3 ray_direction = vec3_sub(vp_pixel, ray_origin);
+    return ray_from(ray_origin, ray_direction);
 }
 
 void render(const Camera *camera, const Hittables *world) {

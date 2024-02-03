@@ -11,7 +11,7 @@
 SDL_Window *sdl_window;
 SDL_Renderer *sdl_renderer;
 
-const int sdl_scale = 4;
+const int sdl_scale = 1;
 #endif
 
 int init_graphics(const int image_width, const int image_height) {

@@ -7,7 +7,7 @@
 #include <stdbool.h>
 
 typedef bool (*ScatterFn)(const void *, const Ray *, const HitRecord *, Ray *,
-                            Vec3 *);
+                          Vec3 *);
 
 typedef struct {
     ScatterFn scatter;
@@ -29,5 +29,13 @@ typedef struct {
 
 bool metal_scatter(const Metal *metal, const Ray *ray, const HitRecord *hr,
                    Ray *scattered, Vec3 *attenuation);
+
+typedef struct {
+    ScatterFn scatter;
+    double refraction;
+} Dielectric;
+
+bool dielectric_scatter(const Dielectric *dielectric, const Ray *ray,
+                        const HitRecord *hr, Ray *scattered, Vec3 *attenuation);
 
 #endif // MATERIAL_H
