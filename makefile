@@ -13,7 +13,7 @@ main: file_tree $(OBJ)
 	$(CC) $(OBJ) -o bin/main $(LD_FLAGS)
 
 sdl: CC_FLAGS += -DMAKE_SDL
-	LD_FLAGS += -lSDL2
+sdl: LD_FLAGS += -lSDL2
 sdl: main
 
 tice: CC_FLAGS += -DMAKE_TICE
@@ -23,8 +23,7 @@ ppm: CC_FLAGS += -DMAKE_PPM
 ppm: main
 
 header: HEADER_NAME = $(shell basename $(FILE) | tr a-z A-Z | sed 's/\./_/')
-	SRC_FILE = $(shell echo $(FILE) | sed 's/\.h/\.c/')
-
+header: SRC_FILE = $(shell echo $(FILE) | sed 's/\.h/\.c/')
 header: 
 ifdef FILE
 ifeq ("$(wildcard $(FILE))", "")
