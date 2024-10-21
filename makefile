@@ -1,26 +1,27 @@
 .PHONY: header all clean file_tree run
 
-CC_FLAGS = -Wall -Wextra -pedantic -g
-LD_FLAGS = -Wall -pedantic -g -lm
+CC_FLAGS=-Wall -Wextra -pedantic -g -O3
+LD_FLAGS=-Wall -pedantic -g -lm -lpthread
 
-CC = gcc
-OBJ = $(shell find src -name '*.c' | sed -e 's/\.c/\.o/' -e 's/src/obj/')
+CC=gcc
+OBJ=$(shell find src -name '*.c' | sed -e 's/\.c/\.o/' -e 's/src/obj/')
+
+TARGET ?= sdl
+
+ifeq ($(TARGET),sdl)
+	CC_FLAGS += -DMAKE_SDL
+	LD_FLAGS += -lSDL2
+else ifeq ($(TARGET),ppm)
+	CC_FLAGS += -DMAKE_PPM
+else ifeq ($(TARGET),tice)
+	CC_FLAGS += -DMAKE_TICE
+endif
 
 obj/%.o: src/%.c
 	$(CC) -c $< -o $@ $(CC_FLAGS)
 
 main: file_tree $(OBJ)
 	$(CC) $(OBJ) -o bin/main $(LD_FLAGS)
-
-sdl: CC_FLAGS += -DMAKE_SDL
-sdl: LD_FLAGS += -lSDL2
-sdl: main
-
-tice: CC_FLAGS += -DMAKE_TICE
-tice: main
-
-ppm: CC_FLAGS += -DMAKE_PPM
-ppm: main
 
 header: HEADER_NAME = $(shell basename $(FILE) | tr a-z A-Z | sed 's/\./_/')
 header: SRC_FILE = $(shell echo $(FILE) | sed 's/\.h/\.c/')
@@ -46,7 +47,7 @@ else
 	@echo "Please specify a header file name."
 endif
 
-run:
+run: main
 	@./bin/main
 
 view_ppm: ppm

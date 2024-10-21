@@ -1,10 +1,12 @@
 #include "camera.h"
 #include "graphics.h"
+#include "hittables.h"
 #include "material.h"
 #include "ray.h"
 #include "vec3.h"
 
 #include <math.h>
+#include <pthread.h>
 #include <stdio.h>
 
 int init_camera(Camera *camera) {
@@ -116,23 +118,61 @@ Ray get_ray(const Camera *camera, const int x, const int y, const double px,
     return ray_from(ray_origin, ray_direction);
 }
 
-void render(const Camera *camera, const Hittables *world) {
-    for (int y = 0; y < camera->image_height; y++) {
-        fprintf(stderr, "\rScanlines remaining: %d ", camera->image_height - y);
-        fflush(stderr);
-        for (int x = 0; x < camera->image_width; x++) {
-            Vec3 rgb = vec3_zero();
-            for (int i = 0; i < camera->samples_per_pixel; i++) {
-                for (int j = 0; j < camera->samples_per_pixel; j++) {
-                    Ray ray = get_ray(camera, x, y, (double)i, (double)j);
-                    rgb = vec3_add(rgb,
-                                   ray_color(&ray, camera->max_depth, world));
-                }
+static inline void set_pixel_row(int y, const Camera *camera,
+                                 const Hittables *world) {
+    static pthread_mutex_t set_pixel_mutex = PTHREAD_MUTEX_INITIALIZER;
+    for (int x = 0; x < camera->image_width; x++) {
+        Vec3 rgb = vec3_zero();
+        for (int i = 0; i < camera->samples_per_pixel; i++) {
+            for (int j = 0; j < camera->samples_per_pixel; j++) {
+                Ray ray = get_ray(camera, x, y, (double)i, (double)j);
+                rgb = vec3_add(rgb, ray_color(&ray, camera->max_depth, world));
             }
-            rgb = vec3_scale(rgb, 1.0 / (camera->samples_per_pixel *
-                                         camera->samples_per_pixel));
-            set_pixel(x, y, rgb);
         }
+        rgb = vec3_scale(
+            rgb, 1.0 / (camera->samples_per_pixel * camera->samples_per_pixel));
+
+        pthread_mutex_lock(&set_pixel_mutex);
+        set_pixel(x, y, rgb);
+        pthread_mutex_unlock(&set_pixel_mutex);
+    }
+}
+
+typedef struct {
+    const Camera *camera;
+    const Hittables *world;
+} render_thread_args;
+void *renderer_thread(void *arg) {
+    static pthread_mutex_t current_row_mutex = PTHREAD_MUTEX_INITIALIZER;
+    static int current_row = 0;
+    int y;
+
+    const render_thread_args *args = (render_thread_args *)arg;
+    for (;;) {
+        pthread_mutex_lock(&current_row_mutex);
+        y = current_row++;
+        pthread_mutex_unlock(&current_row_mutex);
+
+        if (y >= args->camera->image_height)
+            break;
+        set_pixel_row(y, args->camera, args->world);
+        fprintf(stderr, "\rScanlines remaining: %d ",
+                args->camera->image_height - y);
+        fflush(stderr);
+    }
+
+    return NULL;
+}
+
+void render(const Camera *camera, const Hittables *world) {
+    const int threads_limit = 100;
+    pthread_t threads[threads_limit];
+    render_thread_args args = {camera, world};
+    for (int i = 0; i < threads_limit; i++) {
+        pthread_create(&threads[i], NULL, renderer_thread, &args);
+    }
+    for (int i = 0; i < threads_limit; i++) {
+        pthread_join(threads[i], NULL);
     }
     fprintf(stderr, "\rDone.                 \n");
 

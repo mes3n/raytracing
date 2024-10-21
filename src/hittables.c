@@ -55,4 +55,5 @@ void hittables_clear(Hittables *ht) {
 
     hittables_clear(ht->next);
     free(ht);
+    ht = NULL;
 }

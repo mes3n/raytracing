@@ -1,4 +1,7 @@
 #include "graphics.h"
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_video.h>
+#include <string.h>
 
 #ifdef MAKE_PPM
 #include <stdio.h>
@@ -9,22 +12,22 @@
 #include <stdio.h>
 
 SDL_Window *sdl_window;
-SDL_Renderer *sdl_renderer;
+SDL_Surface *sdl_surface;
 
-const int sdl_scale = 1;
+const int sdl_scale = 2;
 #endif
 
 int init_graphics(const int image_width, const int image_height) {
 #ifdef MAKE_SDL
+    SDL_Renderer *sdl_renderer;
     SDL_CreateWindowAndRenderer(image_width * sdl_scale,
                                 image_height * sdl_scale, 0, &sdl_window,
                                 &sdl_renderer);
-    if (sdl_window == NULL || sdl_renderer == NULL) {
+    sdl_surface = SDL_GetWindowSurface(sdl_window);
+    if (sdl_window == NULL || sdl_surface == NULL) {
         fprintf(stderr, "SDL Error: %s\n", SDL_GetError());
         return -1;
     }
-    SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, 0);
-    SDL_RenderClear(sdl_renderer);
 #endif
 #ifdef MAKE_TICE
     // Make Tice
@@ -52,8 +55,8 @@ void set_pixel(int x, int y, Vec3 rgb) {
         .h = sdl_scale,
     };
 
-    SDL_SetRenderDrawColor(sdl_renderer, r, g, b, 255);
-    SDL_RenderFillRect(sdl_renderer, &rect);
+    SDL_FillRect(sdl_surface, &rect, SDL_MapRGB(sdl_surface->format, r, g, b));
+    SDL_UpdateWindowSurface(sdl_window);
 #endif
 #ifdef MAKE_TICE
     // Make Tice
@@ -65,13 +68,12 @@ void set_pixel(int x, int y, Vec3 rgb) {
 
 void stop_graphics(void) {
 #ifdef MAKE_SDL
-    SDL_RenderPresent(sdl_renderer);
+    SDL_UpdateWindowSurface(sdl_window);
 
-    do {
-        SDL_PumpEvents();
-    } while (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_ESCAPE] == 0);
+    for (; !SDL_GetKeyboardState(NULL)[SDL_SCANCODE_ESCAPE]; SDL_PumpEvents())
+        ;
 
-    SDL_DestroyRenderer(sdl_renderer);
+    SDL_FreeSurface(sdl_surface);
     SDL_DestroyWindow(sdl_window);
     SDL_Quit();
 #endif
