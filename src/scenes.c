@@ -1,10 +1,10 @@
 #include "scenes.h"
 
-#include "hittables.h"
-#include "material.h"
-#include "quad.h"
-#include "sphere.h"
-#include "vec3.h"
+#include "render/hittables.h"
+#include "render/material.h"
+#include "render/quad.h"
+#include "render/sphere.h"
+#include "render/vec3.h"
 
 #include <stdlib.h>
 #include <sys/types.h>

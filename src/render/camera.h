@@ -24,6 +24,7 @@ typedef struct {
 } Camera;
 
 int init_camera(Camera *camera);
-void render(const Camera *camera, const Hittables *world);
+Vec3 get_pixel(const Camera *camera, const Hittables *world, const int x,
+               const int y);
 
 #endif // CAMERA_H

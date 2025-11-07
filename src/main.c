@@ -1,5 +1,7 @@
-#include "camera.h"
-#include "hittables.h"
+#include "render/camera.h"
+#include "render/hittables.h"
+
+#include "graphics.h"
 #include "scenes.h"
 
 #include <stdio.h>
@@ -36,6 +38,11 @@ int main(int argc, char **argv) {
 
     Camera camera;
     if (!init_camera(&camera)) {
+        fprintf(stderr, "Failed to create camera.\n");
+        return 1;
+    }
+    if (!init_graphics(camera.image_width, camera.image_height)) {
+        fprintf(stderr, "Failed to initialize graphics.\n");
         return 1;
     }
     render(&camera, world);

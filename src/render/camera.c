@@ -1,12 +1,9 @@
 #include "camera.h"
-#include "graphics.h"
 #include "hittables.h"
 #include "material.h"
 #include "ray.h"
 #include "vec3.h"
 
-#include <math.h>
-#include <pthread.h>
 #include <stdio.h>
 
 int init_camera(Camera *camera) {
@@ -59,36 +56,11 @@ int init_camera(Camera *camera) {
     camera->defocus_disc_u = vec3_scale(u, defocus_radius);
     camera->defocus_disc_v = vec3_scale(v, defocus_radius);
 
-    if (init_graphics(image_width, image_height) < 0) {
-        fprintf(stderr, "Failed to initialize graphics.\n");
-        return false;
-    }
-
     return true;
 }
 
-Vec3 ray_color(const Ray *ray, const int depth, const Hittables *world) {
-    if (depth <= 0) {
-        return vec3_zero();
-    }
-    HitRecord hr;
-    Material *material;
-    if (hit_any(world, ray, &(Interval){1e-3, INFINITY}, &hr, &material)) {
-        Ray scattered;
-        Vec3 attenuation;
-        if (material->scatter(material, ray, &hr, &scattered, &attenuation)) {
-            return vec3_scale_from_vec3(ray_color(&scattered, depth - 1, world),
-                                        attenuation);
-        }
-        return vec3_zero();
-    }
-    Vec3 unit = vec3_normal(ray->direction);
-    double s = 0.5 * (unit.y + 1.0);
-    return vec3_add(vec3_scale(vec3_from(1.0, 1.0, 1.0), 1.0 - s),
-                    vec3_scale(vec3_from(0.5, 0.7, 1.0), s));
-}
-
-static inline Vec3 pixel_sample(const Camera *camera, const double px, const double py) {
+static inline Vec3 pixel_sample(const Camera *camera, const double px,
+                                const double py) {
     return vec3_add(
         vec3_scale(camera->viewport.dx, px / (double)camera->samples_per_pixel),
         vec3_scale(camera->viewport.dy,
@@ -118,64 +90,37 @@ Ray get_ray(const Camera *camera, const int x, const int y, const double px,
     return ray_from(ray_origin, ray_direction);
 }
 
-static inline void set_pixel_row(int y, const Camera *camera,
-                                 const Hittables *world) {
-    static pthread_mutex_t set_pixel_mutex = PTHREAD_MUTEX_INITIALIZER;
-    for (int x = 0; x < camera->image_width; x++) {
-        Vec3 rgb = vec3_zero();
-        for (int i = 0; i < camera->samples_per_pixel; i++) {
-            for (int j = 0; j < camera->samples_per_pixel; j++) {
-                Ray ray = get_ray(camera, x, y, (double)i, (double)j);
-                rgb = vec3_add(rgb, ray_color(&ray, camera->max_depth, world));
-            }
+Vec3 ray_color(const Ray *ray, const int depth, const Hittables *world) {
+    if (depth <= 0) {
+        return vec3_zero();
+    }
+    HitRecord hr;
+    Material *material;
+    if (hit_any(world, ray, &(Interval){1e-3, INFINITY}, &hr, &material)) {
+        Ray scattered;
+        Vec3 attenuation;
+        if (material->scatter(material, ray, &hr, &scattered, &attenuation)) {
+            return vec3_scale_from_vec3(ray_color(&scattered, depth - 1, world),
+                                        attenuation);
         }
-        rgb = vec3_scale(
-            rgb, 1.0 / (camera->samples_per_pixel * camera->samples_per_pixel));
-
-        pthread_mutex_lock(&set_pixel_mutex);
-        set_pixel(x, y, rgb);
-        pthread_mutex_unlock(&set_pixel_mutex);
+        return vec3_zero();
     }
+    Vec3 unit = vec3_normal(ray->direction);
+    double s = 0.5 * (unit.y + 1.0);
+    return vec3_add(vec3_scale(vec3_from(1.0, 1.0, 1.0), 1.0 - s),
+                    vec3_scale(vec3_from(0.5, 0.7, 1.0), s));
 }
 
-typedef struct {
-    const Camera *camera;
-    const Hittables *world;
-} render_thread_args;
-
-void *renderer_thread(void *arg) {
-    static pthread_mutex_t current_row_mutex = PTHREAD_MUTEX_INITIALIZER;
-    static int current_row = 0;
-    int y;
-
-    const render_thread_args *args = (render_thread_args *)arg;
-    for (;;) {
-        pthread_mutex_lock(&current_row_mutex);
-        y = current_row++;
-        pthread_mutex_unlock(&current_row_mutex);
-
-        if (y >= args->camera->image_height)
-            break;
-        set_pixel_row(y, args->camera, args->world);
-        fprintf(stderr, "\rScanlines remaining: %d ",
-                args->camera->image_height - y);
-        fflush(stderr);
+Vec3 get_pixel(const Camera *camera, const Hittables *world, const int x,
+               const int y) {
+    Vec3 rgb = vec3_zero();
+    for (int i = 0; i < camera->samples_per_pixel; i++) {
+        for (int j = 0; j < camera->samples_per_pixel; j++) {
+            Ray ray = get_ray(camera, x, y, (double)i, (double)j);
+            rgb = vec3_add(rgb, ray_color(&ray, camera->max_depth, world));
+        }
     }
-
-    return NULL;
-}
-
-void render(const Camera *camera, const Hittables *world) {
-    const int threads_limit = 100;
-    pthread_t threads[threads_limit];
-    render_thread_args args = {camera, world};
-    for (int i = 0; i < threads_limit; i++) {
-        pthread_create(&threads[i], NULL, renderer_thread, &args);
-    }
-    for (int i = 0; i < threads_limit; i++) {
-        pthread_join(threads[i], NULL);
-    }
-    fprintf(stderr, "\rDone.                 \n");
-
-    stop_graphics();
+    rgb = vec3_scale(
+        rgb, 1.0 / (camera->samples_per_pixel * camera->samples_per_pixel));
+    return rgb;
 }
