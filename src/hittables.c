@@ -12,9 +12,10 @@ bool hit_any(const Hittables *ht, const Ray *ray, const Interval *rayt,
     const Hittables *next = ht;
 
     while (next != NULL) {
-        if (next->shape_hit(next->shape, ray, &(Interval){rayt->min, nearest},
-                            &tmp_hr, material)) {
+        if (next->shape->hit(next->shape, ray, &(Interval){rayt->min, nearest},
+                             &tmp_hr)) {
             *hit_record = tmp_hr;
+            *material = next->shape->material;
             nearest = hit_record->t;
 
             any_hit = true;
@@ -25,7 +26,7 @@ bool hit_any(const Hittables *ht, const Ray *ray, const Interval *rayt,
     return any_hit;
 }
 
-int hittables_add(Hittables **ht, const void *shape, ShapeHitFn shape_hit) {
+int hittables_add(Hittables **ht, const void *shape) {
     if (*ht == NULL) {
         Hittables *new = (Hittables *)malloc(sizeof(Hittables));
 
@@ -34,12 +35,11 @@ int hittables_add(Hittables **ht, const void *shape, ShapeHitFn shape_hit) {
 
         new->next = NULL;
         new->shape = shape;
-        new->shape_hit = shape_hit;
 
         *ht = new;
         return 1;
     }
-    return hittables_add(&((*ht)->next), shape, shape_hit);
+    return hittables_add(&((*ht)->next), shape);
 }
 
 int hittables_len(Hittables *ht) {

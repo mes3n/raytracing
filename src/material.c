@@ -2,7 +2,8 @@
 #include "ray.h"
 #include "vec3.h"
 
-bool lambertian_scatter(const Lambertian *lambertian, const Ray *ray,
+bool lambertian_scatter(const Lambertian *lambertian,
+                        __attribute__((unused)) const Ray *ray,
                         const HitRecord *hr, Ray *scattered,
                         Vec3 *attenuation) {
     Vec3 direction = vec3_add(hr->normal, vec3_random_unit());

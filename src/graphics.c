@@ -1,7 +1,6 @@
 #include "graphics.h"
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_video.h>
-#include <string.h>
 
 #ifdef MAKE_PPM
 #include <stdio.h>

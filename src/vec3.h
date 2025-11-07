@@ -82,16 +82,16 @@ static inline Vec3 vec3_scale_from_vec3(const Vec3 v, const Vec3 u) {
     };
 }
 
+static inline double vec3_dot(const Vec3 v, const Vec3 u) {
+    return v.x * u.x + v.y * u.y + v.z * u.z;
+}
+
 static inline double vec3_length_squared(const Vec3 v) {
-    return v.x * v.x + v.y * v.y + v.z * v.z;
+    return vec3_dot(v, v);
 }
 
 static inline double vec3_length(const Vec3 v) {
     return sqrt(vec3_length_squared(v));
-}
-
-static inline double vec3_dot(const Vec3 v, const Vec3 u) {
-    return v.x * u.x + v.y * u.y + v.z * u.z;
 }
 
 static inline Vec3 vec3_cross(const Vec3 v, const Vec3 u) {

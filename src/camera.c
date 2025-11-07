@@ -88,7 +88,7 @@ Vec3 ray_color(const Ray *ray, const int depth, const Hittables *world) {
                     vec3_scale(vec3_from(0.5, 0.7, 1.0), s));
 }
 
-Vec3 pixel_sample(const Camera *camera, const double px, const double py) {
+static inline Vec3 pixel_sample(const Camera *camera, const double px, const double py) {
     return vec3_add(
         vec3_scale(camera->viewport.dx, px / (double)camera->samples_per_pixel),
         vec3_scale(camera->viewport.dy,
@@ -142,6 +142,7 @@ typedef struct {
     const Camera *camera;
     const Hittables *world;
 } render_thread_args;
+
 void *renderer_thread(void *arg) {
     static pthread_mutex_t current_row_mutex = PTHREAD_MUTEX_INITIALIZER;
     static int current_row = 0;
