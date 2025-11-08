@@ -26,7 +26,7 @@ bool hit_any(const Hittables *ht, const Ray *ray, const Interval *rayt,
     return any_hit;
 }
 
-int hittables_add(Hittables **ht, const void *shape) {
+bool hittables_add(Hittables **ht, const void *shape) {
     if (*ht == NULL) {
         Hittables *new = (Hittables *)malloc(sizeof(Hittables));
 

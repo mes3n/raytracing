@@ -5,14 +5,23 @@
 
 #include <stdlib.h>
 
+/**
+ * 3d vector struct.
+ */
 typedef struct {
     double x, y, z;
 } Vec3;
 
+/**
+* random double 0 <= x < 1
+*/
 static inline double random_double() {
     return (double)rand() / (RAND_MAX + 1.0);
 }
 
+/**
+* random double `min` <= x < `max`
+*/
 static inline double random_double_range(double min, double max) {
     return min + (max - min) * random_double();
 }

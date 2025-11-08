@@ -6,6 +6,15 @@
 
 #include <stdbool.h>
 
+/**
+ * Public struct to represent the values generated when a ray hits an object
+ * in the world.
+ *
+ * @param point A point in space where the ray intersected an object
+ * @param normal Normal vector of the object where it was hit by the ray
+ * @param t Distance traveled by the ray
+ * @param front_face Was the hit on the back or front of object
+ */
 typedef struct {
     Vec3 point;
     Vec3 normal;

@@ -37,15 +37,17 @@ int main(int argc, char **argv) {
     fprintf(stderr, "World has %d objects.\n", hittables_len(world));
 
     Camera camera;
-    if (!init_camera(&camera)) {
+    const double aspect = 16.0 / 9.0;
+    if (!init_camera(&camera, aspect, 10)) {
         fprintf(stderr, "Failed to create camera.\n");
         return 1;
     }
-    if (!init_graphics(camera.image_width, camera.image_height)) {
+    if (!init_graphics(350, aspect)) {
         fprintf(stderr, "Failed to initialize graphics.\n");
         return 1;
     }
     render(&camera, world);
+    stop_graphics();
 
     hittables_clear(world);
 

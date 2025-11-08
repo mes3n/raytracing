@@ -7,7 +7,7 @@
 
 #ifdef MAKE_PPM
 #include <stdio.h>
-#endif
+#endif // MAKE_PPM
 
 #ifdef MAKE_SDL
 #include <SDL2/SDL_events.h>
@@ -16,13 +16,18 @@
 #include <SDL2/SDL.h>
 #include <stdio.h>
 
-SDL_Window *sdl_window;
-SDL_Surface *sdl_surface;
+static SDL_Window *sdl_window;
+static SDL_Surface *sdl_surface;
 
 const int sdl_scale = 2;
-#endif
+#endif // MAKE_SDL
 
-bool init_graphics(const int image_width, const int image_height) {
+static int image_width;
+static int image_height;
+
+bool init_graphics(const int width, const double aspect_ratio) {
+    image_width = width;
+    image_height = (int)((double)width / aspect_ratio);
 #ifdef MAKE_SDL
     SDL_Renderer *sdl_renderer;
     SDL_CreateWindowAndRenderer(image_width * sdl_scale,
@@ -33,13 +38,13 @@ bool init_graphics(const int image_width, const int image_height) {
         fprintf(stderr, "SDL Error: %s\n", SDL_GetError());
         return false;
     }
-#endif
+#endif // MAKE_SDL
 #ifdef MAKE_TICE
     // Make Tice
-#endif
+#endif // MAKE_TICE
 #ifdef MAKE_PPM
     printf("P3\n%d %d\n255\n", image_width, image_height);
-#endif
+#endif // MAKE_PPM
     return true;
 }
 
@@ -62,21 +67,26 @@ void set_pixel(int x, int y, Vec3 rgb) {
 
     SDL_FillRect(sdl_surface, &rect, SDL_MapRGB(sdl_surface->format, r, g, b));
     SDL_UpdateWindowSurface(sdl_window);
-#endif
+#endif // MAKE_SDL
 #ifdef MAKE_TICE
     // Make Tice
-#endif
+#endif // MAKE_TICE
 #ifdef MAKE_PPM
     printf("%d %d %d\n", r, g, b);
-#endif
+#endif // MAKE_PPM
 }
 
 static inline void set_pixel_row(int y, const Camera *camera,
                                  const Hittables *world) {
     static pthread_mutex_t set_pixel_mutex = PTHREAD_MUTEX_INITIALIZER;
-    for (int x = 0; x < camera->image_width; x++) {
+    for (int x = 0; x < image_width; x++) {
+        if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_ESCAPE])
+            break;
+        Vec3 color = get_pixel(camera, world, (double)x / (double)image_width,
+                               (double)y / (double)image_height);
         pthread_mutex_lock(&set_pixel_mutex);
-        set_pixel(x, y, get_pixel(camera, world, x, y));
+        set_pixel(x, y, color);
+        SDL_PumpEvents();
         pthread_mutex_unlock(&set_pixel_mutex);
     }
 }
@@ -97,12 +107,9 @@ void *renderer_thread(void *arg) {
         y = current_row++;
         pthread_mutex_unlock(&current_row_mutex);
 
-        if (y >= args->camera->image_height)
+        if (y >= image_height)
             break;
         set_pixel_row(y, args->camera, args->world);
-        fprintf(stderr, "\rScanlines remaining: %d ",
-                args->camera->image_height - y);
-        fflush(stderr);
     }
 
     return NULL;
@@ -118,9 +125,6 @@ void render(const Camera *camera, const Hittables *world) {
     for (int i = 0; i < threads_limit; i++) {
         pthread_join(threads[i], NULL);
     }
-    fprintf(stderr, "\rDone.                 \n");
-
-    stop_graphics();
 }
 
 void stop_graphics(void) {
@@ -133,5 +137,5 @@ void stop_graphics(void) {
     SDL_FreeSurface(sdl_surface);
     SDL_DestroyWindow(sdl_window);
     SDL_Quit();
-#endif
+#endif // MAKE_SDL
 }
