@@ -69,7 +69,9 @@ Ray get_ray(const Camera *camera, const double x, const double y) {
                           : defocus_disk_sample(camera);
 
     Vec3 ray_direction = vec3_sub(vp_pixel, ray_origin);
-    return ray_from(ray_origin, ray_direction);
+    double ray_time = random_double();
+
+    return timed_ray_from(ray_origin, ray_direction, ray_time);
 }
 
 /// Recursively calculate to color of a ray when cast into the world.

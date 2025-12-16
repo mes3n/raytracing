@@ -10,6 +10,7 @@ typedef struct {
     ShapeHitFn hit;
 
     Vec3 center;
+    Vec3 dcenter;
     double radius;
 } Sphere;
 

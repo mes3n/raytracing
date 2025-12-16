@@ -41,8 +41,11 @@ static inline void many_spheres(Hittables **world) {
                     mat = (Material *)material;
                 }
                 Sphere *sphere = (Sphere *)malloc(sizeof(Sphere));
-                *sphere = (Sphere){mat, (ShapeHitFn)sphere_hit, center,
-                                   .radius = 0.2};
+                double bounce = random_double();
+                *sphere = (Sphere){
+                    mat, (ShapeHitFn)sphere_hit, center,
+                    .dcenter = vec3_from(0.0, bounce < 0.5 ? bounce : 0.0, 0.0),
+                    .radius = 0.2};
                 hittables_add(world, sphere);
             }
         }
@@ -76,7 +79,7 @@ static inline void default_scene(Hittables **world) {
     *ground = (Sphere){
         (Material *)material_ground,
         (ShapeHitFn)sphere_hit,
-        vec3_from(0.0, -1000.0, 0.0),
+        .center = vec3_from(0.0, -1000.0, 0.0),
         .radius = 1000.0,
     };
 
@@ -87,11 +90,11 @@ static inline void default_scene(Hittables **world) {
     Sphere *sphere_center = (Sphere *)malloc(sizeof(Sphere));
     *sphere_center =
         (Sphere){(Material *)material_center, (ShapeHitFn)sphere_hit,
-                 vec3_from(0.0, 1.0, 0.0), .radius = 1.0};
+                 .center = vec3_from(0.0, 1.0, 0.0), .radius = 1.0};
 
     Sphere *sphere_right = (Sphere *)malloc(sizeof(Sphere));
     *sphere_right = (Sphere){(Material *)material_right, (ShapeHitFn)sphere_hit,
-                             vec3_from(4.0, 1.0, 0.0), .radius = 1.0};
+                             .center = vec3_from(4.0, 1.0, 0.0), .radius = 1.0};
 
     hittables_add(world, ground);
     hittables_add(world, sphere_left);

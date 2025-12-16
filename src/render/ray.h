@@ -9,10 +9,16 @@
 typedef struct {
     Vec3 origin;
     Vec3 direction;
+    double time;
 } Ray;
 
 static inline Ray ray_from(const Vec3 origin, const Vec3 direction) {
-    return (Ray){.origin = origin, .direction = direction};
+    return (Ray){.origin = origin, .direction = direction, .time = 0.0};
+}
+
+static inline Ray timed_ray_from(const Vec3 origin, const Vec3 direction,
+                                 const double time) {
+    return (Ray){.origin = origin, .direction = direction, .time = time};
 }
 
 /**
