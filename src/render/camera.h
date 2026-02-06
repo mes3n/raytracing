@@ -40,10 +40,8 @@ typedef struct {
  * @param camera Pointer to `Camera` object
  * @param aspect_ratio Aspect ratio of viewport
  * @param sampels Sample rays created per pixel
- *
- * @return Boolean true for success else false
  */
-bool init_camera(Camera *camera, const double aspect_ratio,
+void init_camera(Camera *camera, const double aspect_ratio,
                  const int sampels);
 
 /**

@@ -4,6 +4,7 @@
 #include "render/hittables.h"
 
 #include <pthread.h>
+#include <unistd.h>
 
 #ifdef MAKE_PPM
 #include <stdio.h>
@@ -19,7 +20,7 @@
 static SDL_Window *sdl_window;
 static SDL_Surface *sdl_surface;
 
-const int sdl_scale = 2;
+// int sdl_scale = 1;
 #endif // MAKE_SDL
 
 static int image_width;
@@ -115,14 +116,13 @@ void *renderer_thread(void *arg) {
     return NULL;
 }
 
-void render(const Camera *camera, const Hittables *world) {
-    const int threads_limit = 100;
-    pthread_t threads[threads_limit];
+void render(const Camera *camera, const Hittables *world, const int nthreads) {
+    pthread_t threads[nthreads];
     render_thread_args args = {camera, world};
-    for (int i = 0; i < threads_limit; i++) {
-        pthread_create(&threads[i], NULL, renderer_thread, &args);
+    for (int i = 0; i < nthreads; i++) {
+        pthread_create(threads + i, NULL, renderer_thread, &args);
     }
-    for (int i = 0; i < threads_limit; i++) {
+    for (int i = 0; i < nthreads; i++) {
         pthread_join(threads[i], NULL);
     }
 }

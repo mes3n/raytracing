@@ -6,6 +6,7 @@
 
 #include <stdbool.h>
 
+extern int sdl_scale;
 /**
  * Initialize the graphics backend
  *
@@ -22,7 +23,7 @@ bool init_graphics(const int width, const double aspect_ratio);
  * @param camera The camera viewing the world
  * @param world The world to be rendered
  */
-void render(const Camera *camera, const Hittables *world);
+void render(const Camera *camera, const Hittables *world, const int nthreads);
 
 /**
  * Finish graphic routines
