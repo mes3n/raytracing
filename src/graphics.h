@@ -1,8 +1,8 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
+#include "render/bvh.h"
 #include "render/camera.h"
-#include "render/hittables.h"
 
 #include <stdbool.h>
 
@@ -23,7 +23,7 @@ bool init_graphics(const int width, const double aspect_ratio);
  * @param camera The camera viewing the world
  * @param world The world to be rendered
  */
-void render(const Camera *camera, const Hittables *world, const int nthreads);
+void render(const Camera *camera, const Bvh *bvh, const int nthreads);
 
 /**
  * Finish graphic routines

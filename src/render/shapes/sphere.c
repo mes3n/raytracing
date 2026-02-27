@@ -1,7 +1,22 @@
 #include "sphere.h"
-#include "vec3.h"
+#include "../interval.h"
+#include "../material.h"
+#include "../vec3.h"
 
 #include <math.h>
+
+Sphere sphere_from(const Material *material, const Vec3 center,
+                   const Vec3 dcenter, const double radius) {
+    Sphere sphere = {0};
+    sphere.material = material;
+    sphere.hit = (ShapeHitFn)sphere_hit;
+    sphere.center = center;
+    sphere.dcenter = dcenter;
+    sphere.radius = radius;
+
+    sphere.bbox = sphere_bbox(&sphere);
+    return sphere;
+}
 
 bool sphere_hit(const Sphere *sphere, const Ray *ray, const Interval *rayt,
                 HitRecord *hit_record) {
@@ -34,4 +49,18 @@ bool sphere_hit(const Sphere *sphere, const Ray *ray, const Interval *rayt,
     set_face_normal(hit_record, ray, out_n);
 
     return true;
+}
+
+Bbox sphere_bbox(const Sphere *sphere) {
+    const double r = sphere->radius;
+    const Vec3 rv = vec3_from(r, r, r);
+    const Vec3 center0 =
+        vec3_add(sphere->center, vec3_scale(sphere->dcenter, 0.0));
+    const Vec3 center1 =
+        vec3_add(sphere->center, vec3_scale(sphere->dcenter, 1.0));
+    const Bbox bbox0 =
+        bbox_from_positions(vec3_sub(center0, rv), vec3_add(center0, rv));
+    const Bbox bbox1 =
+        bbox_from_positions(vec3_sub(center1, rv), vec3_add(center1, rv));
+    return bbox_combine(&bbox0, &bbox1);
 }

@@ -1,7 +1,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include "hittables.h"
+#include "bvh.h"
 #include "vec3.h"
 
 #include <stdbool.h>
@@ -41,8 +41,7 @@ typedef struct {
  * @param aspect_ratio Aspect ratio of viewport
  * @param sampels Sample rays created per pixel
  */
-void init_camera(Camera *camera, const double aspect_ratio,
-                 const int sampels);
+void init_camera(Camera *camera, const double aspect_ratio, const int sampels);
 
 /**
  * Function to get the color of a specific pixel from where the camera sees the
@@ -50,13 +49,13 @@ void init_camera(Camera *camera, const double aspect_ratio,
  * configured camera's view.
  *
  * @param camera Pointer to `Camera` object
- * @param world Pointer to `Hittables` world object
+ * @param world Pointer to `Bvh` world object
  * @param x position of the pixel within the camera's viewport 0.0 < x < 1.0
  * @param y position of the pixel within the camera's viewport 0.0 < y < 1.0
  *
  * @return A floating color value vector where the elements are between 0 and 1
  */
-Vec3 get_pixel(const Camera *camera, const Hittables *world, const double x,
+Vec3 get_pixel(const Camera *camera, const Bvh *bvh, const double x,
                const double y);
 
 #endif // CAMERA_H

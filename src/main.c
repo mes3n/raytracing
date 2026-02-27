@@ -1,9 +1,11 @@
+#include "render/bvh.h"
 #include "render/camera.h"
 #include "render/hittables.h"
 
 #include "graphics.h"
 #include "scenes.h"
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,9 +17,10 @@ static const char *help_message =
     "  -w SCENE    The scene to be rendered\n"
     "  -d DIMS     Dimensions of rendered image as INTxINT\n"
     "  -s SAMPLES  The amount of sample rays per pixel\n"
-    "  -t THREADS  The amount of threads to render with\n";
+    "  -t THREADS  The amount of threads to render with\n"
+    "  -z SCALE    The scaleup for the renderd image\n";
 
-bool get_dims(const char *str, int *width, int *height) {
+bool get_dims(char *str, int *width, int *height) {
     static const int max_string_size = 9;
     char *x = memchr(str, 'x', max_string_size);
     return x != NULL && sscanf(str, "%4d", width) == 1 &&
@@ -26,8 +29,6 @@ bool get_dims(const char *str, int *width, int *height) {
 
 int sdl_scale = 1;
 int main(int argc, char **argv) {
-    Hittables *world = NULL;
-
     int scene = 0;
     int width = 350;
     int height = 200;
@@ -43,15 +44,15 @@ int main(int argc, char **argv) {
                 return 1;
             }
             break;
-        case 's':
-            if (sscanf(optarg, "%d", &samples) != 1) {
-                fprintf(stderr, "Invalid samples format: %s\n", optarg);
-                return 1;
-            }
-            break;
         case 'd':
             if (!get_dims(optarg, &width, &height)) {
                 fprintf(stderr, "Invalid dimension format: %s\n", optarg);
+                return 1;
+            }
+            break;
+        case 's':
+            if (sscanf(optarg, "%d", &samples) != 1) {
+                fprintf(stderr, "Invalid samples format: %s\n", optarg);
                 return 1;
             }
             break;
@@ -74,11 +75,15 @@ int main(int argc, char **argv) {
         }
     }
 
+    Hittables *world = NULL;
     if (create_scenes(scene, &world) != 0) {
         fprintf(stderr, "Failed to create scene.\n");
         return 1;
     }
     fprintf(stderr, "World has %d objects.\n", hittables_len(world));
+
+    Bvh *bvh = bvh_from_hittables(world);  // Consumes the world object
+    fprintf(stderr, "Bvh has %d objects.\n", bvh_count_leaves(bvh));
 
     Camera camera;
     const double aspect = (double)width / (double)height;
@@ -87,11 +92,11 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Failed to initialize graphics.\n");
         return 1;
     }
-    render(&camera, world, nthreads);
+    render(&camera, bvh, nthreads);
     fprintf(stderr, "Done\n");
-    stop_graphics();
 
-    hittables_clear(world);
+    stop_graphics();
+    bvh_free(bvh);
 
     return 0;
 }

@@ -1,7 +1,6 @@
 #include "quad.h"
-#include "interval.h"
-#include "material.h"
-#include "vec3.h"
+#include "../interval.h"
+#include "../vec3.h"
 
 Quad quad_from(Material *material, const Vec3 origin, const Vec3 u,
                const Vec3 v) {

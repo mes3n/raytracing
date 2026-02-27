@@ -1,7 +1,6 @@
 #include "graphics.h"
 
 #include "render/camera.h"
-#include "render/hittables.h"
 
 #include <pthread.h>
 #include <unistd.h>
@@ -39,6 +38,7 @@ bool init_graphics(const int width, const double aspect_ratio) {
         fprintf(stderr, "SDL Error: %s\n", SDL_GetError());
         return false;
     }
+    SDL_UpdateWindowSurface(sdl_window);
 #endif // MAKE_SDL
 #ifdef MAKE_TICE
     // Make Tice
@@ -77,24 +77,23 @@ void set_pixel(int x, int y, Vec3 rgb) {
 #endif // MAKE_PPM
 }
 
-static inline void set_pixel_row(int y, const Camera *camera,
-                                 const Hittables *world) {
+static inline void set_pixel_row(int y, const Camera *camera, const Bvh *bvh) {
     static pthread_mutex_t set_pixel_mutex = PTHREAD_MUTEX_INITIALIZER;
     for (int x = 0; x < image_width; x++) {
+        SDL_PumpEvents();
         if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_ESCAPE])
             break;
-        Vec3 color = get_pixel(camera, world, (double)x / (double)image_width,
+        Vec3 color = get_pixel(camera, bvh, (double)x / (double)image_width,
                                (double)y / (double)image_height);
         pthread_mutex_lock(&set_pixel_mutex);
         set_pixel(x, y, color);
-        SDL_PumpEvents();
         pthread_mutex_unlock(&set_pixel_mutex);
     }
 }
 
 typedef struct {
     const Camera *camera;
-    const Hittables *world;
+    const Bvh *bvh;
 } render_thread_args;
 
 void *renderer_thread(void *arg) {
@@ -110,15 +109,15 @@ void *renderer_thread(void *arg) {
 
         if (y >= image_height)
             break;
-        set_pixel_row(y, args->camera, args->world);
+        set_pixel_row(y, args->camera, args->bvh);
     }
 
     return NULL;
 }
 
-void render(const Camera *camera, const Hittables *world, const int nthreads) {
+void render(const Camera *camera, const Bvh *bvh, const int nthreads) {
     pthread_t threads[nthreads];
-    render_thread_args args = {camera, world};
+    render_thread_args args = {camera, bvh};
     for (int i = 0; i < nthreads; i++) {
         pthread_create(threads + i, NULL, renderer_thread, &args);
     }

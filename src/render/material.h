@@ -8,8 +8,11 @@
 
 /// Function pointer type to describe a function which must be implemented by
 /// a material to describe its effect on the incoming ray
-typedef bool (*ScatterFn)(const void *, const Ray *ray, const HitRecord *hr,
-                          Ray *scattered, Vec3 *attenuation);
+typedef bool (*ScatterFn)(const void *material, const Ray *ray,
+                          const HitRecord *hr, Ray *scattered,
+                          Vec3 *attenuation);
+
+#define DERIVE_MATERIAL() ScatterFn scatter;
 
 /**
  * All material structs must implement this field first.
@@ -17,12 +20,12 @@ typedef bool (*ScatterFn)(const void *, const Ray *ray, const HitRecord *hr,
  * @param scatter Function pointer to calculate how ray is affected by material
  */
 typedef struct {
-    ScatterFn scatter;
+    DERIVE_MATERIAL()
 } Material;
 
 /// Matt material that evenly distributes incoming rays
 typedef struct {
-    ScatterFn scatter;
+    DERIVE_MATERIAL()
     Vec3 albedo;
 } Lambertian;
 
@@ -32,7 +35,7 @@ bool lambertian_scatter(const Lambertian *lambertian, const Ray *ray,
 /// Reflective material where ray bounce mirrored to the normal
 /// Fuzz describes the randomness of the scattered rays direction
 typedef struct {
-    ScatterFn scatter;
+    DERIVE_MATERIAL()
     Vec3 albedo;
     double fuzz;
 } Metal;
@@ -40,10 +43,9 @@ typedef struct {
 bool metal_scatter(const Metal *metal, const Ray *ray, const HitRecord *hr,
                    Ray *scattered, Vec3 *attenuation);
 
-
 /// Glass like transparent material
 typedef struct {
-    ScatterFn scatter;
+    DERIVE_MATERIAL()
     double refraction;
 } Dielectric;
 

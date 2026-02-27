@@ -1,11 +1,15 @@
 #include "interval.h"
 
-int contains(const Interval *interval, double x) {
+bool contains(const Interval *interval, double x) {
     return interval->min <= x && x <= interval->max;
 }
 
-int surrounds(const Interval *interval, double x) {
+bool surrounds(const Interval *interval, double x) {
     return interval->min < x && x < interval->max;
+}
+
+bool overlaps(const Interval *a, const Interval *b) {
+    return surrounds(a, b->min) || surrounds(a, b->max);
 }
 
 double clamp(const Interval *interval, double x) {

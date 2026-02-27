@@ -1,5 +1,4 @@
 #include "camera.h"
-#include "hittables.h"
 #include "material.h"
 #include "ray.h"
 #include "vec3.h"
@@ -71,17 +70,17 @@ Ray get_ray(const Camera *camera, const double x, const double y) {
 
 /// Recursively calculate to color of a ray when cast into the world.
 /// The ray can only hit an object `depth` times before ending.
-Vec3 ray_color(const Ray *ray, const int depth, const Hittables *world) {
+Vec3 ray_color(const Ray *ray, const int depth, const Bvh *bvh) {
     if (depth <= 0) {
         return vec3_zero();
     }
     HitRecord hr;
     Material *material;
-    if (hit_any(world, ray, &(Interval){1e-3, INFINITY}, &hr, &material)) {
+    if (bvh_hit(bvh, ray, &(Interval){1e-3, INFINITY}, &hr, &material)) {
         Ray scattered;
         Vec3 attenuation;
         if (material->scatter(material, ray, &hr, &scattered, &attenuation)) {
-            return vec3_scale_from_vec3(ray_color(&scattered, depth - 1, world),
+            return vec3_scale_from_vec3(ray_color(&scattered, depth - 1, bvh),
                                         attenuation);
         }
         return vec3_zero();
@@ -93,12 +92,12 @@ Vec3 ray_color(const Ray *ray, const int depth, const Hittables *world) {
                     vec3_scale(vec3_from(0.5, 0.7, 1.0), s));
 }
 
-Vec3 get_pixel(const Camera *camera, const Hittables *world, const double x,
+Vec3 get_pixel(const Camera *camera, const Bvh *bvh, const double x,
                const double y) {
     Vec3 rgb = vec3_zero();
     for (int i = 0; i < camera->samples_per_pixel; i++) {
         Ray ray = get_ray(camera, x, y);
-        rgb = vec3_add(rgb, ray_color(&ray, camera->max_depth, world));
+        rgb = vec3_add(rgb, ray_color(&ray, camera->max_depth, bvh));
     }
     rgb = vec3_scale(rgb, 1.0 / camera->samples_per_pixel);
     return rgb;

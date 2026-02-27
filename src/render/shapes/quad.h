@@ -1,12 +1,11 @@
 #ifndef QUAD_H
 #define QUAD_H
 
-#include "hittables.h"
-#include "material.h"
+#include "../hittables.h"
+#include "../material.h"
 
 typedef struct {
-    Material *material;
-    ShapeHitFn hit;
+    DERIVE_HITTABLE()
 
     Vec3 origin;
     Vec3 u, v;
@@ -21,5 +20,7 @@ Quad quad_from(Material *material, const Vec3 origin, const Vec3 u,
 
 bool quad_hit(const Quad *quad, const Ray *ray, const Interval *rayt,
               HitRecord *hit_record);
+
+Bbox quad_bbox(const Quad *quad);
 
 #endif // QUAD_H

@@ -2,8 +2,8 @@
 
 #include "render/hittables.h"
 #include "render/material.h"
-#include "render/quad.h"
-#include "render/sphere.h"
+#include "render/shapes/quad.h"
+#include "render/shapes/sphere.h"
 #include "render/vec3.h"
 
 #include <stdlib.h>
@@ -13,8 +13,10 @@ static inline void many_spheres(Hittables **world) {
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
             double choose_mat = random_double();
-            Vec3 center = vec3_from(a + 0.9 * random_double(), 0.2,
-                                    b + 0.9 * random_double());
+            // Vec3 center = vec3_from(a + 0.9 * random_double(), 0.2,
+            //                         b + 0.9 * random_double());
+            Vec3 center = vec3_from(20 * random_double() - 10, 0.2,
+                                    20 * random_double() - 10);
 
             if (vec3_length(vec3_sub(center, vec3_from(4.0, 0.2, 0.0))) > 0.9) {
                 Material *mat;
@@ -42,10 +44,9 @@ static inline void many_spheres(Hittables **world) {
                 }
                 Sphere *sphere = (Sphere *)malloc(sizeof(Sphere));
                 double bounce = random_double();
-                *sphere = (Sphere){
-                    mat, (ShapeHitFn)sphere_hit, center,
-                    .dcenter = vec3_from(0.0, bounce < 0.5 ? bounce : 0.0, 0.0),
-                    .radius = 0.2};
+                *sphere = sphere_from(
+                    mat, center,
+                    vec3_from(0.0, bounce < 0.5 ? bounce : 0.0, 0.0), 0.2);
                 hittables_add(world, sphere);
             }
         }
@@ -76,25 +77,20 @@ static inline void default_scene(Hittables **world) {
     };
 
     Sphere *ground = (Sphere *)malloc(sizeof(Sphere));
-    *ground = (Sphere){
-        (Material *)material_ground,
-        (ShapeHitFn)sphere_hit,
-        .center = vec3_from(0.0, -1000.0, 0.0),
-        .radius = 1000.0,
-    };
+    *ground = sphere_from((Material *)material_ground,
+                          vec3_from(0.0, -1000.0, 0.0), vec3_zero(), 1000.0);
 
     Sphere *sphere_left = (Sphere *)malloc(sizeof(Sphere));
-    *sphere_left = (Sphere){(Material *)material_left, (ShapeHitFn)sphere_hit,
-                            vec3_from(-4.0, 1.0, 0.0), .radius = 1.0};
+    *sphere_left = sphere_from((Material *)material_left,
+                               vec3_from(-4.0, 1.0, 0.0), vec3_zero(), 1.0);
 
     Sphere *sphere_center = (Sphere *)malloc(sizeof(Sphere));
-    *sphere_center =
-        (Sphere){(Material *)material_center, (ShapeHitFn)sphere_hit,
-                 .center = vec3_from(0.0, 1.0, 0.0), .radius = 1.0};
+    *sphere_center = sphere_from((Material *)material_center,
+                                 vec3_from(0.0, 1.0, 0.0), vec3_zero(), 1.0);
 
     Sphere *sphere_right = (Sphere *)malloc(sizeof(Sphere));
-    *sphere_right = (Sphere){(Material *)material_right, (ShapeHitFn)sphere_hit,
-                             .center = vec3_from(4.0, 1.0, 0.0), .radius = 1.0};
+    *sphere_right = sphere_from((Material *)material_right,
+                                vec3_from(4.0, 1.0, 0.0), vec3_zero(), 1.0);
 
     hittables_add(world, ground);
     hittables_add(world, sphere_left);
