@@ -1,6 +1,6 @@
 .PHONY: header all clean file_tree run
 
-CC_FLAGS=-Wall -Wextra -pedantic -g -O3
+CC_FLAGS=-Wall -Wextra -pedantic -g -O3 -Iexternal
 LD_FLAGS=-Wall -pedantic -g -lm -lpthread
 
 CC=gcc
@@ -20,7 +20,7 @@ endif
 obj/%.o: src/%.c
 	$(CC) -c $< -o $@ $(CC_FLAGS)
 
-main: file_tree $(OBJ)
+main: file_tree external $(OBJ)
 	$(CC) $(OBJ) -o bin/main $(LD_FLAGS)
 
 header: HEADER_NAME = $(shell basename $(FILE) | tr a-z A-Z | sed 's/\./_/')
@@ -46,6 +46,13 @@ endif
 else
 	@echo "Please specify a header file name."
 endif
+
+external/stb_image.h:
+	@mkdir -p external
+	curl -o $@ https://raw.githubusercontent.com/nothings/stb/refs/heads/master/stb_image.h
+
+external: external/stb_image.h
+	@mkdir -p external
 
 run: main
 	@./bin/main

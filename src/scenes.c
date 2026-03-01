@@ -114,6 +114,14 @@ static inline void quads(Hittables **world) {
     hittables_add(world, quad_lower);
 }
 
+void earth(Hittables **world) {
+    Lambertian *earth_material =
+        new_lambertian((Texture *)new_image_texture("assets/earthmap.jpg"));
+    Sphere *sphere = new_sphere((Material *)earth_material,
+                                vec3_from(0.0, 0.0, 0.0), vec3_zero(), 2.0);
+    hittables_add(world, sphere);
+}
+
 int create_scenes(const int scene, Hittables **world) {
     switch (scene) {
     case 0:
@@ -128,6 +136,9 @@ int create_scenes(const int scene, Hittables **world) {
         break;
     case 3:
         checkered_spheres(world);
+        break;
+    case 4:
+        earth(world);
         break;
     default:
         return 1;

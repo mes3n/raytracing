@@ -1,6 +1,8 @@
 #include "texture.h"
 
+#include "math/interval.h"
 #include "math/vec3.h"
+#include "rtw_image.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -39,4 +41,26 @@ Vec3 checker_texture_color(CheckerTexture *checker_texture, const double u,
     return (x + y + z) % 2
                ? checker_texture->even->color(checker_texture->even, u, v, p)
                : checker_texture->odd->color(checker_texture->odd, u, v, p);
+}
+
+ImageTexture *new_image_texture(const char *filename) {
+    ImageTexture *image_texture = (ImageTexture *)malloc(sizeof(ImageTexture));
+    *image_texture =
+        (ImageTexture){.color = (TextureColorFn)image_texture_color,
+                       .image = new_rwt_image(filename)};
+    return image_texture;
+}
+
+Vec3 image_texture_color(ImageTexture *image_texture, double u, double v,
+                         __attribute__((unused)) const Vec3 p) {
+    if (image_texture->image->data == NULL)
+        return vec3_from(0.0, 1.0, 1.0); // Cyan if not loaded
+
+    const Interval zero_one = interval_from(0.0, 1.0);
+    u = clamp(&zero_one, u);
+    v = 1.0 - clamp(&zero_one, v);
+
+    const int x = (int)floor(u * (double)image_texture->image->width);
+    const int y = (int)floor(v * (double)image_texture->image->height);
+    return rtw_image_pixel(image_texture->image, x, y);
 }

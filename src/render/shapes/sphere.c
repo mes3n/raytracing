@@ -54,8 +54,8 @@ bool sphere_hit(const Sphere *sphere, const Ray *ray, const Interval *rayt,
     const double theta = acos(-out_n.y);
     const double phi = atan2(-out_n.z, out_n.x) + M_PI;
 
-    hit_record->u = phi / (M_PI * 2);
-    hit_record->v = theta / phi;
+    hit_record->u = phi / (2 * M_PI);
+    hit_record->v = theta / M_PI;
 
     return true;
 }
