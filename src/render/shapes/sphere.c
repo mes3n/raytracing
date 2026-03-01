@@ -1,20 +1,23 @@
 #include "sphere.h"
-#include "../interval.h"
 #include "../material.h"
-#include "../vec3.h"
+
+#include "../math/interval.h"
+#include "../math/vec3.h"
 
 #include <math.h>
+#include <stdlib.h>
+#include <sys/types.h>
 
-Sphere sphere_from(const Material *material, const Vec3 center,
+Sphere *new_sphere(const Material *material, const Vec3 center,
                    const Vec3 dcenter, const double radius) {
-    Sphere sphere = {0};
-    sphere.material = material;
-    sphere.hit = (ShapeHitFn)sphere_hit;
-    sphere.center = center;
-    sphere.dcenter = dcenter;
-    sphere.radius = radius;
+    Sphere *sphere = (Sphere *)malloc(sizeof(Sphere));
+    sphere->material = material;
+    sphere->hit = (ShapeHitFn)sphere_hit;
+    sphere->center = center;
+    sphere->dcenter = dcenter;
+    sphere->radius = radius;
 
-    sphere.bbox = sphere_bbox(&sphere);
+    sphere->bbox = sphere_bbox(sphere);
     return sphere;
 }
 
@@ -47,6 +50,12 @@ bool sphere_hit(const Sphere *sphere, const Ray *ray, const Interval *rayt,
     Vec3 out_n =
         vec3_scale(vec3_sub(hit_record->point, center), 1.0 / sphere->radius);
     set_face_normal(hit_record, ray, out_n);
+
+    const double theta = acos(-out_n.y);
+    const double phi = atan2(-out_n.z, out_n.x) + M_PI;
+
+    hit_record->u = phi / (M_PI * 2);
+    hit_record->v = theta / phi;
 
     return true;
 }

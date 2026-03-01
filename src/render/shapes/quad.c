@@ -1,22 +1,25 @@
 #include "quad.h"
-#include "../interval.h"
-#include "../vec3.h"
 
-Quad quad_from(Material *material, const Vec3 origin, const Vec3 u,
+#include "../math/interval.h"
+#include "../math/vec3.h"
+
+#include <stdlib.h>
+
+Quad *new_quad(Material *material, const Vec3 origin, const Vec3 u,
                const Vec3 v) {
-    Quad quad;
-    quad.material = material;
-    quad.hit = (ShapeHitFn)quad_hit;
+    Quad *quad = (Quad *)malloc(sizeof(Quad));
+    quad->material = material;
+    quad->hit = (ShapeHitFn)quad_hit;
 
-    quad.origin = origin;
-    quad.u = u;
-    quad.v = v;
+    quad->origin = origin;
+    quad->u = u;
+    quad->v = v;
 
     Vec3 normal = vec3_cross(u, v);
-    quad.normal = vec3_normal(normal);
+    quad->normal = vec3_normal(normal);
 
-    quad.d = vec3_dot(quad.normal, quad.origin);
-    quad.w = vec3_scale(normal, 1.0 / vec3_dot(normal, normal));
+    quad->d = vec3_dot(quad->normal, quad->origin);
+    quad->w = vec3_scale(normal, 1.0 / vec3_dot(normal, normal));
 
     return quad;
 }

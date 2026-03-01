@@ -1,7 +1,7 @@
 #include "camera.h"
 #include "material.h"
-#include "ray.h"
-#include "vec3.h"
+
+#include "math/ray.h"
 
 void init_camera(Camera *camera, const double aspect_ratio, const int samples) {
     camera->samples_per_pixel = samples;

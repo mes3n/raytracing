@@ -1,11 +1,12 @@
 #ifndef HITTABLES_H
 #define HITTABLES_H
 
-#include "bbox.h"
 #include "hit_record.h"
-#include "interval.h"
 #include "material.h"
-#include "ray.h"
+
+#include "math/bbox.h"
+#include "math/interval.h"
+#include "math/ray.h"
 
 #include <stdbool.h>
 

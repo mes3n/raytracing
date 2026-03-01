@@ -1,5 +1,4 @@
 #include "bbox.h"
-#include "interval.h"
 
 bool bbox_hit(const Bbox *bbox, const Ray *ray, Interval rayt) {
     double *ray_dir = (double *)&ray->direction;

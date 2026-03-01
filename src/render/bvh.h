@@ -1,12 +1,13 @@
 #ifndef BVH_H
 #define BVH_H
 
-#include "bbox.h"
 #include "hit_record.h"
 #include "hittables.h"
-#include "interval.h"
 #include "material.h"
-#include "ray.h"
+
+#include "math/bbox.h"
+#include "math/interval.h"
+#include "math/ray.h"
 
 #include <stdbool.h>
 
@@ -51,7 +52,6 @@ int bvh_count_leaves(const Bvh *bvh);
  * @param bvh Root node of `Bvh`
  */
 void bvh_free(Bvh *bvh);
-
 
 /**
  * Calculate if a ray hits a `Bvh` within a specific interval. If so, return

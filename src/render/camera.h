@@ -2,7 +2,8 @@
 #define CAMERA_H
 
 #include "bvh.h"
-#include "vec3.h"
+
+#include "math/vec3.h"
 
 #include <stdbool.h>
 

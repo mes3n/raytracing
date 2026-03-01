@@ -1,6 +1,24 @@
 #include "material.h"
-#include "ray.h"
-#include "vec3.h"
+#include "texture.h"
+
+#include "math/ray.h"
+#include "math/vec3.h"
+
+#include <stdlib.h>
+
+Lambertian *new_lambertian(Texture *texture) {
+    Lambertian *lambertian = (Lambertian *)malloc(sizeof(Lambertian));
+    *lambertian = (Lambertian){.scatter = (ScatterFn)lambertian_scatter,
+                               .texture = texture};
+    return lambertian;
+}
+
+Lambertian *new_lambertian_solid(const Vec3 albedo) {
+    Lambertian *lambertian = (Lambertian *)malloc(sizeof(Lambertian));
+    *lambertian = (Lambertian){.scatter = (ScatterFn)lambertian_scatter,
+                               .texture = (Texture *)new_solid_texture(albedo)};
+    return lambertian;
+}
 
 bool lambertian_scatter(const Lambertian *lambertian,
                         __attribute__((unused)) const Ray *ray,
@@ -12,9 +30,17 @@ bool lambertian_scatter(const Lambertian *lambertian,
     }
 
     *scattered = timed_ray_from(hr->point, direction, ray->time);
-    *attenuation = lambertian->albedo;
+    *attenuation = lambertian->texture->color(lambertian->texture, hr->u, hr->v,
+                                              hr->point);
 
     return true;
+}
+
+Metal *new_metal(const Vec3 albedo, const double fuzz) {
+    Metal *metal = (Metal *)malloc(sizeof(Metal));
+    *metal = (Metal){
+        .scatter = (ScatterFn)metal_scatter, .albedo = albedo, .fuzz = fuzz};
+    return metal;
 }
 
 bool metal_scatter(const Metal *metal, const Ray *ray, const HitRecord *hr,
@@ -34,6 +60,13 @@ static inline double reflectance(double cosine, double ri) {
     double r0 = (1.0 - ri) / (1.0 + ri);
     r0 = r0 * r0;
     return r0 + (1.0 - r0) * pow((1.0 - cosine), 5);
+}
+
+Dielectric *new_dielectric(const double refraction) {
+    Dielectric *dielectric = (Dielectric *)malloc(sizeof(Dielectric));
+    *dielectric = (Dielectric){.scatter = (ScatterFn)dielectric_scatter,
+                               .refraction = refraction};
+    return dielectric;
 }
 
 bool dielectric_scatter(const Dielectric *dielectric, const Ray *ray,

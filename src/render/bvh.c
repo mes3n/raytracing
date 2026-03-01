@@ -1,8 +1,4 @@
 #include "bvh.h"
-#include "bbox.h"
-#include "hittables.h"
-#include "interval.h"
-#include "material.h"
 
 #include <assert.h>
 #include <stdio.h>

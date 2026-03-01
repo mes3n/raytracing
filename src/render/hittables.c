@@ -1,7 +1,8 @@
 #include "hittables.h"
-#include "bbox.h"
-#include "interval.h"
 #include "material.h"
+
+#include "math/bbox.h"
+#include "math/interval.h"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,8 +1,8 @@
 #ifndef HIT_RECORD_H
 #define HIT_RECORD_H
 
-#include "ray.h"
-#include "vec3.h"
+#include "math/ray.h"
+#include "math/vec3.h"
 
 #include <stdbool.h>
 
@@ -20,6 +20,8 @@ typedef struct {
     Vec3 normal;
     double t;
     bool front_face;
+
+    double u, v;
 } HitRecord;
 
 static inline void set_face_normal(HitRecord *hit_record, const Ray *ray,

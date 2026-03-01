@@ -2,7 +2,9 @@
 #define MATERIAL_H
 
 #include "hit_record.h"
-#include "ray.h"
+#include "texture.h"
+
+#include "math/ray.h"
 
 #include <stdbool.h>
 
@@ -26,8 +28,12 @@ typedef struct {
 /// Matt material that evenly distributes incoming rays
 typedef struct {
     DERIVE_MATERIAL()
-    Vec3 albedo;
+    Texture *texture;
 } Lambertian;
+
+Lambertian *new_lambertian(Texture *texture);
+
+Lambertian *new_lambertian_solid(const Vec3 albedo);
 
 bool lambertian_scatter(const Lambertian *lambertian, const Ray *ray,
                         const HitRecord *hr, Ray *scattered, Vec3 *attenuation);
@@ -40,6 +46,8 @@ typedef struct {
     double fuzz;
 } Metal;
 
+Metal *new_metal(const Vec3 albedo, const double fuzz);
+
 bool metal_scatter(const Metal *metal, const Ray *ray, const HitRecord *hr,
                    Ray *scattered, Vec3 *attenuation);
 
@@ -48,6 +56,8 @@ typedef struct {
     DERIVE_MATERIAL()
     double refraction;
 } Dielectric;
+
+Dielectric *new_dielectric(const double refraction);
 
 bool dielectric_scatter(const Dielectric *dielectric, const Ray *ray,
                         const HitRecord *hr, Ray *scattered, Vec3 *attenuation);

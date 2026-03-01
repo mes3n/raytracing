@@ -4,47 +4,32 @@
 #include "render/material.h"
 #include "render/shapes/quad.h"
 #include "render/shapes/sphere.h"
-#include "render/vec3.h"
+#include "render/texture.h"
 
-#include <stdlib.h>
-#include <sys/types.h>
+#include "render/math/vec3.h"
 
 static inline void many_spheres(Hittables **world) {
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
             double choose_mat = random_double();
-            // Vec3 center = vec3_from(a + 0.9 * random_double(), 0.2,
-            //                         b + 0.9 * random_double());
-            Vec3 center = vec3_from(20 * random_double() - 10, 0.2,
-                                    20 * random_double() - 10);
+            Vec3 center = vec3_from(a + 0.9 * random_double(), 0.2,
+                                    b + 0.9 * random_double());
 
             if (vec3_length(vec3_sub(center, vec3_from(4.0, 0.2, 0.0))) > 0.9) {
                 Material *mat;
                 if (choose_mat < 0.8) {
                     Vec3 albedo =
                         vec3_scale_from_vec3(vec3_random(), vec3_random());
-                    Lambertian *material =
-                        (Lambertian *)malloc(sizeof(Lambertian));
-                    *material = (Lambertian){(ScatterFn)lambertian_scatter,
-                                             .albedo = albedo};
-                    mat = (Material *)material;
+                    mat = (Material *)new_lambertian_solid(albedo);
                 } else if (choose_mat < 0.95) {
                     Vec3 albedo = vec3_random_range(0.5, 1.0);
                     double fuzz = random_double_range(0.0, 0.5);
-                    Metal *material = (Metal *)malloc(sizeof(Metal));
-                    *material = (Metal){(ScatterFn)metal_scatter,
-                                        .albedo = albedo, .fuzz = fuzz};
-                    mat = (Material *)material;
+                    mat = (Material *)new_metal(albedo, fuzz);
                 } else {
-                    Dielectric *material =
-                        (Dielectric *)malloc(sizeof(Dielectric));
-                    *material = (Dielectric){(ScatterFn)dielectric_scatter,
-                                             .refraction = 1.5};
-                    mat = (Material *)material;
+                    mat = (Material *)new_dielectric(1.5);
                 }
-                Sphere *sphere = (Sphere *)malloc(sizeof(Sphere));
                 double bounce = random_double();
-                *sphere = sphere_from(
+                Sphere *sphere = new_sphere(
                     mat, center,
                     vec3_from(0.0, bounce < 0.5 ? bounce : 0.0, 0.0), 0.2);
                 hittables_add(world, sphere);
@@ -54,43 +39,27 @@ static inline void many_spheres(Hittables **world) {
 }
 
 static inline void default_scene(Hittables **world) {
-    Lambertian *material_ground = (Lambertian *)malloc(sizeof(Lambertian));
-    *material_ground = (Lambertian){
-        (ScatterFn)lambertian_scatter,
-        .albedo = vec3_from(0.5, 0.5, 0.5),
-    };
-    Lambertian *material_left = (Lambertian *)malloc(sizeof(Lambertian));
-    *material_left = (Lambertian){
-        (ScatterFn)lambertian_scatter,
-        .albedo = vec3_from(0.4, 0.2, 0.1),
-    };
-    Dielectric *material_center = (Dielectric *)malloc(sizeof(Dielectric));
-    *material_center = (Dielectric){
-        (ScatterFn)dielectric_scatter,
-        .refraction = 1.5,
-    };
-    Metal *material_right = (Metal *)malloc(sizeof(Metal));
-    *material_right = (Metal){
-        (ScatterFn)metal_scatter,
-        .albedo = vec3_from(0.7, 0.6, 0.5),
-        .fuzz = 0.0,
-    };
+    Lambertian *material_ground = new_lambertian((Texture *)new_checker_texture(
+        (Texture *)new_solid_texture(vec3_from(0.2, 0.3, 0.1)),
+        (Texture *)new_solid_texture(vec3_from(0.9, 0.9, 0.9))));
 
-    Sphere *ground = (Sphere *)malloc(sizeof(Sphere));
-    *ground = sphere_from((Material *)material_ground,
-                          vec3_from(0.0, -1000.0, 0.0), vec3_zero(), 1000.0);
+    Lambertian *material_left = new_lambertian_solid(vec3_from(0.4, 0.2, 0.1));
+    Dielectric *material_center = new_dielectric(1.5);
+    Metal *material_right = new_metal(vec3_from(0.7, 0.6, 0.5), 0.0);
 
-    Sphere *sphere_left = (Sphere *)malloc(sizeof(Sphere));
-    *sphere_left = sphere_from((Material *)material_left,
-                               vec3_from(-4.0, 1.0, 0.0), vec3_zero(), 1.0);
+    Sphere *ground =
+        new_sphere((Material *)material_ground, vec3_from(0.0, -1000.0, 0.0),
+                   vec3_zero(), 1000.0);
 
-    Sphere *sphere_center = (Sphere *)malloc(sizeof(Sphere));
-    *sphere_center = sphere_from((Material *)material_center,
-                                 vec3_from(0.0, 1.0, 0.0), vec3_zero(), 1.0);
+    Sphere *sphere_left = new_sphere(
+        (Material *)material_left, vec3_from(-4.0, 1.0, 0.0), vec3_zero(), 1.0);
 
-    Sphere *sphere_right = (Sphere *)malloc(sizeof(Sphere));
-    *sphere_right = sphere_from((Material *)material_right,
-                                vec3_from(4.0, 1.0, 0.0), vec3_zero(), 1.0);
+    Sphere *sphere_center =
+        new_sphere((Material *)material_center, vec3_from(0.0, 1.0, 0.0),
+                   vec3_zero(), 1.0);
+
+    Sphere *sphere_right = new_sphere(
+        (Material *)material_right, vec3_from(4.0, 1.0, 0.0), vec3_zero(), 1.0);
 
     hittables_add(world, ground);
     hittables_add(world, sphere_left);
@@ -98,43 +67,45 @@ static inline void default_scene(Hittables **world) {
     hittables_add(world, sphere_right);
 }
 
+static inline void checkered_spheres(Hittables **world) {
+    Lambertian *checker_texture = new_lambertian((Texture *)new_checker_texture(
+        (Texture *)new_solid_texture(vec3_from(0.2, 0.3, 0.1)),
+        (Texture *)new_solid_texture(vec3_from(0.9, 0.9, 0.9))));
+
+    hittables_add(world,
+                  new_sphere((Material *)checker_texture,
+                             vec3_from(0.0, -10.0, 0.0), vec3_zero(), 10.0));
+    hittables_add(world,
+                  new_sphere((Material *)checker_texture,
+                             vec3_from(0.0, 10.0, 0.0), vec3_zero(), 10.0));
+}
+
 static inline void quads(Hittables **world) {
-    Lambertian *left_red = (Lambertian *)malloc(sizeof(Lambertian));
-    *left_red = (Lambertian){(ScatterFn)lambertian_scatter,
-                             .albedo = vec3_from(1.0, 0.2, 0.2)};
-    Lambertian *back_green = (Lambertian *)malloc(sizeof(Lambertian));
-    *back_green = (Lambertian){(ScatterFn)lambertian_scatter,
-                               .albedo = vec3_from(0.2, 1.0, 0.2)};
-    Lambertian *right_blue = (Lambertian *)malloc(sizeof(Lambertian));
-    *right_blue = (Lambertian){(ScatterFn)lambertian_scatter,
-                               .albedo = vec3_from(0.2, 0.2, 1.0)};
-    Lambertian *upper_orange = (Lambertian *)malloc(sizeof(Lambertian));
-    *upper_orange = (Lambertian){(ScatterFn)lambertian_scatter,
-                                 .albedo = vec3_from(1.0, 0.5, 0.0)};
-    Lambertian *lower_teal = (Lambertian *)malloc(sizeof(Lambertian));
-    *lower_teal = (Lambertian){(ScatterFn)lambertian_scatter,
-                               .albedo = vec3_from(0.2, 0.8, 0.8)};
+    Lambertian *left_red = new_lambertian_solid(vec3_from(1.0, 0.2, 0.2));
+    Lambertian *back_green = new_lambertian_solid(vec3_from(0.2, 1.0, 0.2));
+    Lambertian *right_blue = new_lambertian_solid(vec3_from(0.2, 0.2, 1.0));
+    Lambertian *upper_orange = new_lambertian_solid(vec3_from(1.0, 0.5, 0.0));
+    Lambertian *lower_teal = new_lambertian_solid(vec3_from(0.2, 0.8, 0.8));
 
-    Quad *quad_left = (Quad *)malloc(sizeof(Quad));
-    *quad_left = quad_from((Material *)left_red, vec3_from(-3.0, -2.0, 5.0),
-                           vec3_from(0.0, 0.0, -4.0), vec3_from(0.0, 4.0, 0.0));
+    Quad *quad_left =
+        new_quad((Material *)left_red, vec3_from(-3.0, -2.0, 5.0),
+                 vec3_from(0.0, 0.0, -4.0), vec3_from(0.0, 4.0, 0.0));
 
-    Quad *quad_back = (Quad *)malloc(sizeof(Quad));
-    *quad_back = quad_from((Material *)back_green, vec3_from(-2.0, -2.0, 0.0),
-                           vec3_from(4.0, 0.0, 0.0), vec3_from(0.0, 4.0, 0.0));
+    Quad *quad_back =
+        new_quad((Material *)back_green, vec3_from(-2.0, -2.0, 0.0),
+                 vec3_from(4.0, 0.0, 0.0), vec3_from(0.0, 4.0, 0.0));
 
-    Quad *quad_right = (Quad *)malloc(sizeof(Quad));
-    *quad_right = quad_from((Material *)right_blue, vec3_from(3.0, -2.0, 1.0),
-                            vec3_from(0.0, 0.0, 4.0), vec3_from(0.0, 4.0, 0.0));
+    Quad *quad_right =
+        new_quad((Material *)right_blue, vec3_from(3.0, -2.0, 1.0),
+                 vec3_from(0.0, 0.0, 4.0), vec3_from(0.0, 4.0, 0.0));
 
-    Quad *quad_upper = (Quad *)malloc(sizeof(Quad));
-    *quad_upper = quad_from((Material *)upper_orange, vec3_from(-2.0, 3.0, 1.0),
-                            vec3_from(4.0, 0.0, 0.0), vec3_from(0.0, 0.0, 4.0));
+    Quad *quad_upper =
+        new_quad((Material *)upper_orange, vec3_from(-2.0, 3.0, 1.0),
+                 vec3_from(4.0, 0.0, 0.0), vec3_from(0.0, 0.0, 4.0));
 
-    Quad *quad_lower = (Quad *)malloc(sizeof(Quad));
-    *quad_lower =
-        quad_from((Material *)lower_teal, vec3_from(-2.0, -3.0, 5.0),
-                  vec3_from(4.0, 0.0, 0.0), vec3_from(0.0, 0.0, -4.0));
+    Quad *quad_lower =
+        new_quad((Material *)lower_teal, vec3_from(-2.0, -3.0, 5.0),
+                 vec3_from(4.0, 0.0, 0.0), vec3_from(0.0, 0.0, -4.0));
 
     hittables_add(world, quad_left);
     hittables_add(world, quad_back);
@@ -154,6 +125,9 @@ int create_scenes(const int scene, Hittables **world) {
         break;
     case 2:
         quads(world);
+        break;
+    case 3:
+        checkered_spheres(world);
         break;
     default:
         return 1;
