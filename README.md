@@ -1,73 +1,105 @@
 # Raytracing
 
-A raytracing project based on the Ray Tracing in One Weekend books implemented
-in C.
+![Raytraced image after first book](assets/rtweekend.png)
+
+A raytracing project based on the Ray Tracing in One Weekend series,
+implemented in C.
+
+## About
+
+The project is based on the Ray Tracing in One Weekend series authored by
+Peter Shirley, Trevor David Black, and Steve Hollasch. The series code is written
+in C++. As such, much focus has been put into building algorithms used for
+sorting the world objects, and implementing the polymorphism needed for multiple
+different textures, materials and shapes to be easily iterated and traced.
+
+### World Containers
+
+Implementing an efficient storage method for tracing shapes has been a point
+of focus. The first solution was a custom implemented linked list where world
+objects could be added dynamically as pointers to a `Hittable`. This proved a
+simple solution although it causes the scene to be iterated in $O(n)$ time.
+Later on, this was upgraded to use a bounding volume hierarchy where the scene
+was continuously split in half along its longest axis. The creation of the `Bvh`
+object prompted the implementation of a merge sort algorithm in order to split
+the scene of hittables in half. The `Bvh` reduced the time to iterate the scene
+to $O(log n)$.
+
+### Polymorphism
+
+The `Hittable` base structure is an example of how polymorphism has been
+implemented for this project where all `Hittable` types must implement specific
+fields in their respective data structures using the `DERIVE_HITTABLE()` macro.
+For example, the `Sphere` structure must first derive the hittable fields before
+fields specific to the sphere shape can be created. The same is also true for
+both `Material` and `Texture`.
+
+```c
+#include "hittable."
+
+typedef struct {
+    DERIVE_HITTABLE()
+
+    Vec3 center;
+    Vec3 dcenter;
+    double radius;
+} Sphere;
+```
 
 ## Building
 
-The code can be compiled into a binary with three options. These options work by
-passing `-DMAKE_{SDL, PPM, TICE}` to the compiler in order to compile the
-correct graphical integration. Multiple flags can be passed manually to build a
-binary with support for multiple output formats. When switching between
-different outputs `src/graphics.c` will need to be recompiled, which can be done
-with `make clean` and the compiling for the prefered target.
+### Dependencies
 
-### SDL
+The project only supports a SDL frontend at the moment. Thus, it is required to
+install sdl2 and its headers. The project also optionally depends on `stb_image`
+in order to load image textures, this dependency is automatically configured
+when building the project and can be opted out of using `CONFIG_STB_IMAGE`.
 
-Building the project for displaying the resulting image with **SDL2** requires
-SDL2 and its headers to be installed to the system. SDL2 can be installed with
+### Configuration Options
 
-```bash
-pacman -S sdl2  # or
-xbps-install SDL2 SDL2-devel
-```
+The binary can be built with two configuration options, `CONFIG_FRONTEND` and
+`CONFIG_STB_IMAGE`. These options can be set through the terminal or `.config`.
 
-Bulding the project itself can then be done with
+> Changing any of the options will require the project to be rebuilt with
+> `make all`
 
-```bash
-TARGET=sdl make
-```
+`CONFIG_FRONTEND` default is sdl and it can only be set to sdl.
 
-### PPM
+`CONFIG_STB_IMAGE` default is 'y' but can be used to opt out of the `stb_image`
+dependency by setting it to 'n'. This will cause image textures to give a
+warning and display black and magenta checkers.
 
-The project can also be built with support for outputting images in the **PPM**
-format. For this, simply compile the code with
+### Make Targets
 
 ```bash
-TARGET=ppm make
+git clone https://github.com/mes3n/raytracing.git
+cd raytracing
+
+pacman -S sdl2
 ```
 
-### TICE
+The default build process also fetches and precompiles the `stb_image` header.
+Therefore, it is also **not** necessary to define the `STB_IMAGE_IMPLEMENTATION`
+in any other file using the header although the built object file must also be
+linked into the target.
 
-At some point I also hope to implement this for the TI-CE calculators, but it so
-far lacks support.
+```bash
+make  # build project with defaults
+make clean  # remove binaries
+make reset  # remove downloaded dependencies
+```
 
-## Running
+```bash
+echo "CONFIG_STB_IMAGE=n" > .config
+make  # build without fetching stb_image headers
+make reset
+```
 
-The binary is by default compiled to `bin/main` and can by run directly or with
-`make run`.
+### Running
 
-### PPM
-
-When running a binary compiled with **PPM** output, the file content will be
-written to *stdout*. Pipe this into the prefered output file with
-`make run > out/result.ppm` or with `make view_ppm` altough this will require
-you to configure a method for opening the resulting image in the `makefile`,
-`gthumb` is used by default.
-
-### TICE
-
-Running the **TICE** binary will require a ti-ce calculator or emulator but
-there is not yet support for this target.
-
-## Results
-
-Below are the final results of the code.
-
-### Ray Tracing in One Weekend
-
-![Code output after first book converted to png](assets/rtweekend.png)
+The generated binary should be located in `bin/main`.
+Run `./bin/main -h` for options when raytracing the image.
 
 ## References
 
-[*Ray Tracing in One Weekend*](https://raytracing.github.io/books/RayTracingInOneWeekend.html)
+[_Ray Tracing in One Weekend_](https://raytracing.github.io/books/RayTracingInOneWeekend.html)

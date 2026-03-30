@@ -4,6 +4,8 @@ out
 bin
 obj
 
+.config
+
 # Prerequisites
 *.d
 

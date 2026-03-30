@@ -7,6 +7,10 @@
 #include <math.h>
 #include <stdlib.h>
 
+#ifdef NO_STB_IMAGE
+#include <stdio.h>
+#endif // NO_STB_IMAGE
+
 SolidTexture *new_solid_texture(const Vec3 albedo) {
     SolidTexture *solid_texture = (SolidTexture *)malloc(sizeof(SolidTexture));
     *solid_texture = (SolidTexture){
@@ -44,6 +48,13 @@ Vec3 checker_texture_color(CheckerTexture *checker_texture, const double u,
 }
 
 ImageTexture *new_image_texture(const char *filename) {
+#ifdef NO_STB_IMAGE
+#include <stdio.h>
+    fprintf(stderr, "[ WARN ] Using image textures on NO_STB_IMAGE build.\n");
+    return (ImageTexture *)new_checker_texture(
+        (Texture *)new_solid_texture(vec3_from(1.0, 0.0, 1.0)),
+        (Texture *)new_solid_texture(vec3_zero()));
+#endif // NO_STB_IMAGE
     ImageTexture *image_texture = (ImageTexture *)malloc(sizeof(ImageTexture));
     *image_texture =
         (ImageTexture){.color = (TextureColorFn)image_texture_color,
@@ -53,7 +64,7 @@ ImageTexture *new_image_texture(const char *filename) {
 
 Vec3 image_texture_color(ImageTexture *image_texture, double u, double v,
                          __attribute__((unused)) const Vec3 p) {
-    if (image_texture->image->data == NULL)
+    if (image_texture->image == NULL || image_texture->image->data == NULL)
         return vec3_from(0.0, 1.0, 1.0); // Cyan if not loaded
 
     const Interval zero_one = interval_from(0.0, 1.0);

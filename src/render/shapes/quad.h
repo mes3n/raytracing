@@ -1,7 +1,7 @@
 #ifndef QUAD_H
 #define QUAD_H
 
-#include "../hittables.h"
+#include "hittable.h"
 
 typedef struct {
     DERIVE_HITTABLE()

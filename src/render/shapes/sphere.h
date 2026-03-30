@@ -1,9 +1,7 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
-#include "../hittables.h"
-
-#include <stdbool.h>
+#include "hittable.h"
 
 typedef struct {
     DERIVE_HITTABLE()

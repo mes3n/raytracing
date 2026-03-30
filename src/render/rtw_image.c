@@ -3,11 +3,14 @@
 #include "math/vec3.h"
 
 #include <assert.h>
+
+#ifndef NO_STB_IMAGE
 #include <stdlib.h>
 
-#define STBI_NO_FAILURE_STRINGS
-#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#else
+#include <stdio.h>
+#endif // NO_STB_IMAGE
 
 #define bytes_per_pixel 3
 
@@ -19,7 +22,15 @@ static inline int clamp_int(const int min, const int max, const int x) {
     return x;
 }
 
-RwtImage *new_rwt_image(const char *filename) {
+RwtImage *new_rwt_image(const char *filename
+#ifdef NO_STB_IMAGE
+                        __attribute__((unused))
+#endif // NO_STB_IMAGE
+) {
+#ifdef NO_STB_IMAGE
+    fprintf(stderr, "[ WARN ] Using stb_image on NO_STB_IMAGE build.\n");
+    return NULL;
+#else
     RwtImage *rwt_image = (RwtImage *)malloc(sizeof(RwtImage));
     *rwt_image = (RwtImage){0};
 
@@ -31,11 +42,14 @@ RwtImage *new_rwt_image(const char *filename) {
     assert(n == bytes_per_pixel);
 
     return rwt_image;
+#endif // NO_STB_IMAGE
 }
 
 Vec3 rtw_image_pixel(const RwtImage *image, int x, int y) {
+#ifndef NO_STB_IMAGE
     if (image->data == NULL)
-        return vec3_from(1.0, 0.0, 1.0);  // Debugging color magenta
+#endif                                   // NO_STB_IMAGE
+        return vec3_from(1.0, 0.0, 1.0); // Debugging color magenta
 
     x = clamp_int(0, image->width, x);
     y = clamp_int(0, image->height, y);

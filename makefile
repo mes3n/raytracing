@@ -1,72 +1,54 @@
-.PHONY: header all clean file_tree run
+-include .config
 
-CC_FLAGS=-Wall -Wextra -pedantic -g -O3 -Iexternal
-LD_FLAGS=-Wall -pedantic -g -lm -lpthread
+.PHONY: all clean reset
+
+CC_FLAGS=-Wall -Wextra -pedantic -g -Ofast -Iexternal
+LD_FLAGS=-Wall -Wextra -pedantic -g -Ofast -lm -lpthread
 
 CC=gcc
+TARGET=bin/main
 OBJ=$(shell find src -name '*.c' | sed -e 's/\.c/\.o/' -e 's/src/obj/')
 
-TARGET ?= sdl
+CONFIG_FRONTEND ?= sdl
+CONFIG_STB_IMAGE ?= y
 
-ifeq ($(TARGET),sdl)
+ifeq ($(CONFIG_FRONTEND),sdl)
 	CC_FLAGS += -DMAKE_SDL
 	LD_FLAGS += -lSDL2
-else ifeq ($(TARGET),ppm)
-	CC_FLAGS += -DMAKE_PPM
-else ifeq ($(TARGET),tice)
-	CC_FLAGS += -DMAKE_TICE
 endif
 
-obj/%.o: src/%.c
+ifeq ($(CONFIG_STB_IMAGE),n)
+	CC_FLAGS += -DNO_STB_IMAGE
+endif
+
+$(TARGET): $(OBJ)
+	@mkdir -p $(shell dirname $@)
+	$(CC) $^ -o $@ $(LD_FLAGS)
+
+obj/%.o:: src/%.c
+	@mkdir -p $(shell dirname $@)
 	$(CC) -c $< -o $@ $(CC_FLAGS)
 
-main: file_tree external $(OBJ)
-	$(CC) $(OBJ) -o bin/main $(LD_FLAGS)
-
-header: HEADER_NAME = $(shell basename $(FILE) | tr a-z A-Z | sed 's/\./_/')
-header: SRC_FILE = $(shell echo $(FILE) | sed 's/\.h/\.c/')
-header: 
-ifdef FILE
-ifeq ("$(wildcard $(FILE))", "")
-	@touch $(FILE) 
-	@touch $(SRC_FILE)
-	@echo '#ifndef $(HEADER_NAME)' >> $(FILE)
-	@echo '#define $(HEADER_NAME)' >> $(FILE)
-	@echo '' >> $(FILE)
-	@echo '' >> $(FILE)
-	@echo '' >> $(FILE)
-	@echo '#endif // $(HEADER_NAME)' >> $(FILE)
-	@echo '#include "$(shell basename $(FILE))"' >> $(SRC_FILE)
-
-	@echo "Created c header file ($(FILE)) with header guard ($(HEADER_NAME)) and source file ($(SRC_FILE))."
-	# git add $(FILE) $(SRC_FILE)
-else
-	@echo "Header file already exists."
+ifneq ($(CONFIG_STB_IMAGE),n)
+src/render/rtw_image.c: external/stb_image.o
+$(TARGET): external/stb_image.o
 endif
-else
-	@echo "Please specify a header file name."
-endif
+
+external/stb_image.o: CC_FLAGS += -DSTB_IMAGE_IMPLEMENTATION
+external/stb_image.o: external/stb_image.h
+	@echo "[ INFO ] Precompiling $@"
+	$(CC) -x c -c $< -o $@ $(CC_FLAGS)
 
 external/stb_image.h:
-	@mkdir -p external
+	@mkdir -p $(shell dirname $@)
+	@echo "[ INFO ] Downloading dependency $@"
 	curl -o $@ https://raw.githubusercontent.com/nothings/stb/refs/heads/master/stb_image.h
 
-external: external/stb_image.h
-	@mkdir -p external
-
-run: main
-	@./bin/main
-
-view_ppm: ppm
-	@mkdir -p out
-	@./bin/main > out/result.ppm
-	@gthumb out/result.ppm
-
-all: clean file_tree main
-
-file_tree:
-	mkdir -p bin $(shell find src -type d | sed 's/src/obj/g')
+all: clean $(TARGET)
 
 clean:
 	rm -rf bin obj
+
+reset: clean
+	rm -rf external
 

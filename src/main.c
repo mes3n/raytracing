@@ -14,11 +14,12 @@
 static const char *help_message =
     "Usage: %s\n"
     "Raytracing renderer to create a static image.\n"
-    "  -w SCENE    The scene to be rendered\n"
+    "  -w SCENE    The scene to be rendered as int (default: 0)\n"
     "  -d DIMS     Dimensions of rendered image as INTxINT\n"
-    "  -s SAMPLES  The amount of sample rays per pixel\n"
-    "  -t THREADS  The amount of threads to render with\n"
-    "  -z SCALE    The scaleup for the renderd image\n";
+    "  -s SAMPLES  The amount of sample rays per pixel (default: 10)\n"
+    "  -t THREADS  The amount of threads to render with (default: processing "
+    "units)\n"
+    "  -z SCALE    The scaleup for the renderd image (default: 1)\n";
 
 bool get_dims(char *str, int *width, int *height) {
     static const int max_string_size = 9;
@@ -82,7 +83,7 @@ int main(int argc, char **argv) {
     }
     fprintf(stderr, "World has %d objects.\n", hittables_len(world));
 
-    Bvh *bvh = bvh_from_hittables(world);  // Consumes the world object
+    Bvh *bvh = bvh_from_hittables(world); // Consumes the world object
     fprintf(stderr, "Bvh has %d objects.\n", bvh_count_leaves(bvh));
 
     Camera camera;
