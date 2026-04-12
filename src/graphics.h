@@ -25,6 +25,8 @@ bool init_graphics(const int width, const double aspect_ratio);
  */
 void render(const Camera *camera, const Bvh *bvh, const int nthreads);
 
+void render_buffer(const Vec3 *colors, const int width, const int height);
+
 /**
  * Finish graphic routines
  */

@@ -40,6 +40,12 @@ int bvh_count_leaves(const Bvh *bvh) {
     return bvh_count_leaves(bvh->left) + bvh_count_leaves(bvh->right);
 }
 
+int bvh_count_nodes(const Bvh *bvh) {
+    if (!bvh)
+        return 0;
+    return 1 + bvh_count_nodes(bvh->left) + bvh_count_nodes(bvh->right);
+}
+
 bool bvh_hit(const Bvh *bvh, const Ray *ray, const Interval *rayt,
              HitRecord *hit_record, Material **material) {
     if (!bbox_hit(&bvh->bbox, ray, *rayt))

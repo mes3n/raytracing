@@ -5,9 +5,8 @@
 #include <assert.h>
 
 #ifndef NO_STB_IMAGE
+#include <stb_image.h>
 #include <stdlib.h>
-
-#include "stb_image.h"
 #else
 #include <stdio.h>
 #endif // NO_STB_IMAGE

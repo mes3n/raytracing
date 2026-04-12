@@ -42,6 +42,7 @@ static inline void default_scene(Hittables **world) {
     Lambertian *material_ground = new_lambertian((Texture *)new_checker_texture(
         (Texture *)new_solid_texture(vec3_from(0.2, 0.3, 0.1)),
         (Texture *)new_solid_texture(vec3_from(0.9, 0.9, 0.9))));
+    material_ground = new_lambertian_solid(vec3_from(0.8, 0.8, 0.8));
 
     Lambertian *material_left = new_lambertian_solid(vec3_from(0.4, 0.2, 0.1));
     Dielectric *material_center = new_dielectric(1.5);
@@ -63,8 +64,8 @@ static inline void default_scene(Hittables **world) {
 
     hittables_add(world, ground);
     hittables_add(world, sphere_left);
-    hittables_add(world, sphere_center);
-    hittables_add(world, sphere_right);
+    // hittables_add(world, sphere_center);
+    // hittables_add(world, sphere_right);
 }
 
 static inline void checkered_spheres(Hittables **world) {

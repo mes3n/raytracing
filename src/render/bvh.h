@@ -45,6 +45,8 @@ Bvh *bvh_from_hittables(Hittables *hittables);
  */
 int bvh_count_leaves(const Bvh *bvh);
 
+int bvh_count_nodes(const Bvh *bvh);
+
 /**
  * Free all nodes of a `Bvh`.
  * Note that this does not free the node's contents.

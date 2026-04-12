@@ -3,13 +3,10 @@
 #include "render/camera.h"
 
 #include <pthread.h>
+#include <stddef.h>
 #include <unistd.h>
 
-#ifdef MAKE_PPM
-#include <stdio.h>
-#endif // MAKE_PPM
-
-#ifdef MAKE_SDL
+#ifdef SDL_FRONTEND
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_video.h>
 
@@ -19,8 +16,7 @@
 static SDL_Window *sdl_window;
 static SDL_Surface *sdl_surface;
 
-// int sdl_scale = 1;
-#endif // MAKE_SDL
+#endif // SDL_FRONTEND
 
 static int image_width;
 static int image_height;
@@ -28,7 +24,7 @@ static int image_height;
 bool init_graphics(const int width, const double aspect_ratio) {
     image_width = width;
     image_height = (int)((double)width / aspect_ratio);
-#ifdef MAKE_SDL
+#ifdef SDL_FRONTEND
     SDL_Renderer *sdl_renderer;
     SDL_CreateWindowAndRenderer(image_width * sdl_scale,
                                 image_height * sdl_scale, 0, &sdl_window,
@@ -39,13 +35,7 @@ bool init_graphics(const int width, const double aspect_ratio) {
         return false;
     }
     SDL_UpdateWindowSurface(sdl_window);
-#endif // MAKE_SDL
-#ifdef MAKE_TICE
-    // Make Tice
-#endif // MAKE_TICE
-#ifdef MAKE_PPM
-    printf("P3\n%d %d\n255\n", image_width, image_height);
-#endif // MAKE_PPM
+#endif // SDL_FRONTEND
     return true;
 }
 
@@ -58,7 +48,7 @@ void set_pixel(int x, int y, Vec3 rgb) {
     int r = (int)(255.999 * rgb.x);
     int g = (int)(255.999 * rgb.y);
     int b = (int)(255.999 * rgb.z);
-#ifdef MAKE_SDL
+#ifdef SDL_FRONTEND
     SDL_Rect rect = (SDL_Rect){
         .x = x * sdl_scale,
         .y = y * sdl_scale,
@@ -67,14 +57,8 @@ void set_pixel(int x, int y, Vec3 rgb) {
     };
 
     SDL_FillRect(sdl_surface, &rect, SDL_MapRGB(sdl_surface->format, r, g, b));
-    SDL_UpdateWindowSurface(sdl_window);
-#endif // MAKE_SDL
-#ifdef MAKE_TICE
-    // Make Tice
-#endif // MAKE_TICE
-#ifdef MAKE_PPM
-    printf("%d %d %d\n", r, g, b);
-#endif // MAKE_PPM
+    // SDL_UpdateWindowSurface(sdl_window);
+#endif // SDL_FRONTEND
 }
 
 static inline void set_pixel_row(int y, const Camera *camera, const Bvh *bvh) {
@@ -126,8 +110,16 @@ void render(const Camera *camera, const Bvh *bvh, const int nthreads) {
     }
 }
 
+void render_buffer(const Vec3 *colors, const int width, const int height) {
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            set_pixel(x, y, colors[y * width + x]);
+        }
+    }
+}
+
 void stop_graphics(void) {
-#ifdef MAKE_SDL
+#ifdef SDL_FRONTEND
     SDL_UpdateWindowSurface(sdl_window);
 
     for (; !SDL_GetKeyboardState(NULL)[SDL_SCANCODE_ESCAPE]; SDL_PumpEvents())
@@ -136,5 +128,5 @@ void stop_graphics(void) {
     SDL_FreeSurface(sdl_surface);
     SDL_DestroyWindow(sdl_window);
     SDL_Quit();
-#endif // MAKE_SDL
+#endif // SDL_FRONTEND
 }
