@@ -22,38 +22,39 @@ static inline Ray timed_ray_from(const float3 origin, const float3 direction,
 }
 
 static inline float3 reflect(const float3 v, const float3 normal) {
-    return v - normal * 2 * dot(v, normal);
+    return v - normal * 2.0f * dot(v, normal);
 }
 
 static inline float3 refract(const float3 uv, const float3 normal,
                              const float etai_over_etat) {
-    const float cos_theta = fmin(dot(-uv, normal), 1);
-    const float3 r_out_perp = uv + normal * cos_theta * etai_over_etat;
+    const float cos_theta = fmin(dot(-uv, normal), 1.0f);
+    const float3 r_out_perp = (uv + normal * cos_theta) * etai_over_etat;
     const float3 r_out_parallel =
-        normal * -sqrt(fabs(1 - dot(r_out_perp, r_out_perp)));
+        normal * -sqrt(fabs(1.0f - dot(r_out_perp, r_out_perp)));
     return r_out_perp + r_out_parallel;
 }
 
-float random(__global uint *state) {
+/// 0 < r < 1
+float random(uint *state) {
     *state *= *state * 74779405 + 2891336453;
     uint result = ((*state >> ((*state >> 28) + 4)) ^ *state) * 277803737;
     result = (result >> 22) ^ result;
-    return result / 4294967295.0;
+    return result / 4294967295.0f;
 }
 
-float random_guassian(__global uint *state) {
-    float theta = 2 * 3.1415926 * random(state);
-    float rho = sqrt(-2 * log(random(state)));
+float random_guassian(uint *state) {
+    float theta = 2.0f * M_PI_F * random(state);
+    float rho = sqrt(-2.0f * log(random(state)));
     return rho * cos(theta);
 }
 
-float2 random_in_circle(__global uint *state) {
+float2 random_in_circle(uint *state) {
     float r = sqrt(random(state));
-    float v = 2 * 3.1415926 * random(state);
+    float v = 2.0f * M_PI_F * random(state);
     return (float2)(r * sin(v), r * cos(v));
 }
 
-float3 random_unit(__global uint *state) {
+float3 random_unit(uint *state) {
     float x = random_guassian(state);
     float y = random_guassian(state);
     float z = random_guassian(state);

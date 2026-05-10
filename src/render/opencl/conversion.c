@@ -1,5 +1,6 @@
 #include "conversion.h"
 
+#include "CL/cl_platform.h"
 #include "kernels/common.h.cl"
 #include "src/render/bvh.h"
 #include "src/render/material.h"
@@ -13,8 +14,8 @@
 CL_Camera convert_camera(const Camera *camera) {
     CL_Camera cl_camera;
 
-    cl_camera.samples_per_pixel = (cl_int)camera->samples_per_pixel;
-    cl_camera.max_depth = (cl_int)camera->max_depth;
+    cl_camera.samples_per_pixel = (cl_uint)camera->samples_per_pixel;
+    cl_camera.max_depth = (cl_uint)camera->max_depth;
 
     cl_camera.origin.x = (cl_float)camera->origin.x;
     cl_camera.origin.y = (cl_float)camera->origin.y;
@@ -83,7 +84,7 @@ CL_Material convert_material(const Material *material) {
     return cl_material;
 }
 
-CL_Hittable convert_hittable(const Hittable *hittable, const size_t mat_idx) {
+CL_Hittable convert_hittable(const Hittable *hittable, const cl_uint mat_idx) {
     CL_Hittable cl_hittable;
 
     cl_hittable.material_idx = mat_idx;
@@ -116,9 +117,9 @@ CL_Hittable convert_hittable(const Hittable *hittable, const size_t mat_idx) {
     return cl_hittable;
 }
 
-CL_Bvh convert_bvh_node(const Bvh *bvh_node, CL_Bvh *bvh_buffer, size_t *ib,
-                        CL_Hittable *hittable_buffer, size_t *ih,
-                        CL_Material *material_buffer, size_t *im) {
+CL_Bvh convert_bvh_node(const Bvh *bvh_node, CL_Bvh *bvh_buffer, cl_uint *ib,
+                        CL_Hittable *hittable_buffer, cl_uint *ih,
+                        CL_Material *material_buffer, cl_uint *im) {
     CL_Bvh cl_bvh_node;
 
     cl_bvh_node.bbox.min.x = (cl_float)bvh_node->bbox.x.min;
@@ -129,8 +130,8 @@ CL_Bvh convert_bvh_node(const Bvh *bvh_node, CL_Bvh *bvh_buffer, size_t *ib,
     cl_bvh_node.bbox.max.z = (cl_float)bvh_node->bbox.z.max;
 
     if (bvh_node->shape != NULL) {
-        cl_bvh_node.left_idx = SIZE_MAX;
-        cl_bvh_node.right_idx = SIZE_MAX;
+        cl_bvh_node.left_idx = CL_SIZE_MAX;
+        cl_bvh_node.right_idx = CL_SIZE_MAX;
         cl_bvh_node.hittable_idx = (*ih)++;
 
         hittable_buffer[cl_bvh_node.hittable_idx] =
@@ -140,7 +141,7 @@ CL_Bvh convert_bvh_node(const Bvh *bvh_node, CL_Bvh *bvh_buffer, size_t *ib,
                             .material_idx] =
             convert_material(bvh_node->shape->material);
     } else {
-        cl_bvh_node.hittable_idx = SIZE_MAX;
+        cl_bvh_node.hittable_idx = CL_SIZE_MAX;
         cl_bvh_node.left_idx = (*ib)++;
         cl_bvh_node.right_idx = (*ib)++;
 
@@ -158,9 +159,9 @@ CL_Bvh convert_bvh_node(const Bvh *bvh_node, CL_Bvh *bvh_buffer, size_t *ib,
 bool convert_bvh(const Bvh *bvh, CL_Bvh *bvh_buffer,
                  CL_Hittable *hittable_buffer, CL_Material *material_buffer) {
 
-    size_t bvh_idx = 1; // 0 is preserved for root node
-    size_t ht_idx = 0;
-    size_t mat_idx = 0;
+    cl_uint bvh_idx = 1; // 0 is preserved for root node
+    cl_uint ht_idx = 0;
+    cl_uint mat_idx = 0;
     bvh_buffer[0] = convert_bvh_node(bvh, bvh_buffer, &bvh_idx, hittable_buffer,
                                      &ht_idx, material_buffer, &mat_idx);
 

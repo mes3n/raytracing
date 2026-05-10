@@ -2,13 +2,11 @@
 #define COMMON_H
 
 #ifndef RAY_CL_AS_H
-#ifndef SIZE_MAX
-#define SIZE_MAX 0xffffffff
-#endif // SIZE_MAX
 typedef float3 CL_Vec3;
 typedef float CL_float;
 typedef int CL_int;
 typedef bool CL_bool;
+typedef uint CL_uint;
 #define RAY_CL_PREFIX(name) name
 #else
 #include <stddef.h>
@@ -19,7 +17,10 @@ typedef cl_float3 CL_Vec3;
 typedef cl_float CL_float;
 typedef cl_int CL_int;
 typedef cl_bool CL_bool;
+typedef cl_uint CL_uint;
 #endif // RAY_CL_AS_H
+
+#define CL_SIZE_MAX 0xffffffff
 
 /**
  * Struct to represent a ray in space using its origin and direction.
@@ -46,8 +47,8 @@ typedef struct {
  * not be changed manually.
  */
 typedef struct {
-    CL_int samples_per_pixel;
-    CL_int max_depth;
+    CL_uint samples_per_pixel;
+    CL_uint max_depth;
 
     CL_Vec3 origin;
 
@@ -114,7 +115,7 @@ typedef struct {
         } sphere;
     } shape;
 
-    size_t material_idx;
+    CL_uint material_idx;
     RAY_CL_PREFIX(Bbox) bbox;
 } RAY_CL_PREFIX(Hittable);
 
@@ -128,9 +129,9 @@ typedef struct {
  */
 typedef struct {
     RAY_CL_PREFIX(Bbox) bbox;
-    size_t left_idx;
-    size_t right_idx;
-    size_t hittable_idx;
+    CL_uint left_idx;
+    CL_uint right_idx;
+    CL_uint hittable_idx;
 } RAY_CL_PREFIX(Bvh);
 
 /**
@@ -148,7 +149,7 @@ typedef struct {
     CL_float t;
     CL_bool front_face;
 
-    size_t material_idx;
+    CL_uint material_idx;
 
     CL_float u, v;
 } RAY_CL_PREFIX(HitRecord);
